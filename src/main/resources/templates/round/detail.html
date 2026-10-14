@@ -62,11 +62,12 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="i, s : ${items}" th:id="|item-${i.roundItemId}|"
+            <tr th:each="i, s : ${items}" th:id="|item-${i.roundItemId}|" class="row--clickable" tabindex="0"
+                th:attr="data-href=@{/inspections/{id}(id=${i.roundItemId})}"
                 th:classappend="${i.noReply} ? 'row--no-reply' : (${i.submitStatus.name() == 'REJECTED'} ? 'row--error' : '')">
                 <td class="num" th:text="${s.count}" th:title="|체크리스트 순번 ${i.seqNo}|">1</td>
                 <td th:text="${i.auditArea.label}">영역</td>
-                <td th:text="${i.auditItem}">항목</td>
+                <td><a class="cell-link" th:href="@{/inspections/{id}(id=${i.roundItemId})}" th:text="${i.auditItem}">항목</a></td>
                 <td class="pre small" th:text="${i.regulation}">규정</td>
                 <td class="pre" th:text="${i.itemDetail}">상세</td>
                 <td><span class="tag" th:classappend="${i.auditPeriod.name() == 'EVERY'} ? 'tag--strong'" th:text="${i.auditPeriod.label}">3분기</span></td>
@@ -84,7 +85,6 @@
                     <span class="nowrap" th:if="${i.plannedDate}" th:text="|(${i.plannedDate})|">(2026-12-31)</span>
                 </td>
                 <td>
-                    <a th:href="@{/inspections/{id}(id=${i.roundItemId})}" class="small">상세</a>
                     <span th:if="${i.evidenceCount > 0}" class="tag" th:text="|증적 ${i.evidenceCount}|">증적</span>
                     <span th:if="${i.noReply}" class="tag">회신불필요</span>
                     <span th:unless="${i.noReply}" class="tag" th:classappend="|submit--${i.submitStatus.name().toLowerCase()}|"
@@ -113,7 +113,7 @@
             </tbody>
         </table>
     </div>
-    <p class="small muted">음영 행: 회신불필요 · No는 회차 안 순서이며, 마우스를 올리면 체크리스트 순번을 볼 수 있습니다.</p>
+    <p class="small muted">행을 누르면 항목 상세로 이동합니다. 음영 행: 회신불필요 · No는 회차 안 순서이며, 마우스를 올리면 체크리스트 순번을 볼 수 있습니다.</p>
 
     <section class="panel" th:if="${!#lists.isEmpty(excludedItems)}">
         <h3 th:text="|제외 항목 ${#lists.size(excludedItems)}건|">제외 항목</h3>
@@ -134,5 +134,6 @@
         <a class="button" th:href="@{/rounds}">목록</a>
     </div>
 </main>
+<script th:src="@{/js/round.js}"></script>
 </body>
 </html>
