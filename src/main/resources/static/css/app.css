@@ -195,7 +195,11 @@ form.inline { display: inline; }
     width: 280px; height: 280px; border-radius: 50%;
     border: 24px solid rgba(201, 176, 122, .22);
 }
-.login-hero__mark { width: 56px; height: 56px; margin-bottom: 28px; }
+/* 진한 초록 배경에서 심볼(초록·빨강)이 묻히지 않도록 흰 둥근 판 위에 올린다. 이미지 비율(232x220)은 유지 */
+.login-hero__mark {
+    display: block; box-sizing: border-box; height: 64px; width: auto; padding: 10px 12px;
+    background: #fff; border-radius: 14px; object-fit: contain; margin-bottom: 28px;
+}
 .login-hero h2 { font-size: 28px; line-height: 1.35; margin: 0 0 12px; }
 .login-hero h2::after { background: var(--c-gold); width: 48px; }
 .login-hero p { margin: 0; color: rgba(255, 255, 255, .82); font-size: 14px; max-width: 28em; }
