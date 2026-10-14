@@ -19,7 +19,7 @@
             <td th:text="${m.plannedDate} ?: '-'">2025-12-31</td>
             <td>
                 <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">완료</span>
-                <span class="tag" th:if="${m.closed}">종결</span>
+                <span class="tag" th:if="${m.closed}">최종확정</span>
             </td>
         </tr>
         </tbody>

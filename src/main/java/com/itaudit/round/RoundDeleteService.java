@@ -19,7 +19,7 @@ import com.itaudit.evidence.EvidenceService;
  * 회차와 그 안의 점검 입력·증적(파일 포함)·적정성 점검 기록·코멘트를 완전히 지우고 되돌릴 수 없다.
  * [결정] CLAUDE.md 의 '판정·파일 삭제는 논리 삭제' 규칙의 예외로 사용자가 물리 삭제를 선택했다.
  *        대신 지운 내용의 요약을 활동 이력(감사 로그)에 남긴다.
- * 조치가 진행·종결됐거나 직접 등록한 개선사항·권고사항이 연결된 회차는 관리대장이 깨지므로 삭제할 수 없다.
+ * 조치가 진행·최종확정됐거나 직접 등록한 개선사항·권고사항이 연결된 회차는 관리대장이 깨지므로 삭제할 수 없다.
  * 분기 점검 제출 시 자동 등록되어 아무도 손대지 않은 개선사항은 회차와 함께 지운다.
  */
 @Service
@@ -56,7 +56,7 @@ public class RoundDeleteService {
                 .filter(r -> purgeMapper.countBlockingImprovements(r.getRoundId()) > 0)
                 .map(AuditRound::getLabel).toList();
         if (!linked.isEmpty()) {
-            throw new BusinessException("조치가 진행·종결되었거나 직접 등록한 개선사항·권고사항이 연결된 회차는 삭제할 수 없습니다: "
+            throw new BusinessException("조치가 진행·최종확정되었거나 직접 등록한 개선사항·권고사항이 연결된 회차는 삭제할 수 없습니다: "
                     + String.join(", ", linked));
         }
 

@@ -42,8 +42,9 @@ public final class ActionLabels {
         put(ActivityLogService.ROUND_DONE, "적정성 점검 완료");
         put(ActivityLogService.IMPROVEMENT_CREATE, "개선·권고 등록");
         put(ActivityLogService.IMPROVEMENT_UPDATE, "개선·권고 수정");
-        put(ActivityLogService.IMPROVEMENT_CLOSE, "종결");
-        put(ActivityLogService.IMPROVEMENT_REOPEN, "종결 취소");
+        put(ActivityLogService.IMPROVEMENT_CLOSE, "최종 확정");
+        put(ActivityLogService.IMPROVEMENT_RETURN, "완료 반려(이전 단계로)");
+        put(ActivityLogService.IMPROVEMENT_REOPEN, "최종 확정 취소");
         put(ActivityLogService.EVIDENCE_UPLOAD, "파일 업로드");
         put(ActivityLogService.EVIDENCE_DELETE, "파일 삭제");
         put(ActivityLogService.EXCEL_EXPORT, "엑셀 내보내기");

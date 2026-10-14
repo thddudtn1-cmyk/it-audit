@@ -185,28 +185,28 @@ class ImprovementFlowTest {
     void 완료된_건만_종결하고_종결_취소에는_사유가_필요하다() throws Exception {
         Long id = createImprovement();
         mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()))
-                .andExpect(flash().attribute("errorMessage", "조치 결과가 '완료'인 건만 종결할 수 있습니다."));
+                .andExpect(flash().attribute("errorMessage", "조치 결과가 '완료'인 건만 최종확정할 수 있습니다."));
 
         mvc.perform(post("/improvements/" + id).with(user(kim)).with(csrf())
                 .param("actionResult", "DONE").param("actionStatus", "전 계정 정리 완료"));
         mvc.perform(post("/improvements/" + id + "/close").param("comment", "증빙 확인").with(user(lead)).with(csrf()))
-                .andExpect(flash().attribute("message", "종결했습니다."));
+                .andExpect(flash().attribute("message", "최종확정했습니다."));
         Improvement closed = service.get(id, lead);
         assertThat(closed.isClosed()).isTrue();
         assertThat(closed.getClosedBy()).isEqualTo(lead.getUserId());
 
         // 종결 후 수정 불가, 미종결 목록에서 빠짐
         mvc.perform(post("/improvements/" + id).with(user(kim)).with(csrf()).param("actionResult", "IN_PROGRESS"))
-                .andExpect(content().string(Matchers.containsString("종결된 건은 수정할 수 없습니다")));
+                .andExpect(content().string(Matchers.containsString("최종확정된 건은 수정할 수 없습니다")));
         mvc.perform(get("/improvements").with(user(lead)))
                 .andExpect(content().string(Matchers.containsString("해당하는 건이 없습니다")));
         mvc.perform(get("/improvements").param("closed", "CLOSED").with(user(lead)))
                 .andExpect(content().string(Matchers.containsString("전 계정 정리 완료")));
 
         mvc.perform(post("/improvements/" + id + "/reopen").with(user(lead)).with(csrf()))
-                .andExpect(flash().attribute("errorMessage", "종결 취소 사유을(를) 입력하세요."));
+                .andExpect(flash().attribute("errorMessage", "최종확정 취소 사유을(를) 입력하세요."));
         mvc.perform(post("/improvements/" + id + "/reopen").param("reason", "추가 증빙 필요").with(user(lead)).with(csrf()))
-                .andExpect(flash().attribute("message", "종결을 취소했습니다."));
+                .andExpect(flash().attribute("message", "최종확정을 취소했습니다. 완료 검토 대기 상태로 돌아갑니다."));
         assertThat(service.get(id, lead).isClosed()).isFalse();
         assertThat(activityLogMapper.findByAction(ActivityLogService.IMPROVEMENT_CLOSE)).hasSize(1);
         assertThat(activityLogMapper.findByAction(ActivityLogService.IMPROVEMENT_REOPEN))

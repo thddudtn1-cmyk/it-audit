@@ -140,7 +140,7 @@ class RoundDeleteTest {
                 + "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", linked, kim.getUserId(), lead.getUserId());
 
         mvc.perform(delete(lead, free, linked))
-                .andExpect(flash().attribute("errorMessage", "조치가 진행·종결되었거나 직접 등록한 개선사항·권고사항이 연결된 회차는 삭제할 수 없습니다: 2026년 3분기"));
+                .andExpect(flash().attribute("errorMessage", "조치가 진행·최종확정되었거나 직접 등록한 개선사항·권고사항이 연결된 회차는 삭제할 수 없습니다: 2026년 3분기"));
         assertThat(roundMapper.findRound(linked)).isNotNull();
         assertThat(roundMapper.findRound(free)).isNotNull();
 

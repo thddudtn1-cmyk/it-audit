@@ -130,7 +130,7 @@ public class ImprovementController {
         return "improvement/new";
     }
 
-    // ---------- 상세·수정·종결 ----------
+    // ---------- 상세·수정·완료 검토(최종확정·반려) ----------
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, @AuthenticationPrincipal LoginUser user, Model model) {
@@ -159,7 +159,22 @@ public class ImprovementController {
                         @AuthenticationPrincipal LoginUser user, RedirectAttributes ra) {
         try {
             service.close(id, comment, user);
-            ra.addFlashAttribute("message", "종결했습니다.");
+            ra.addFlashAttribute("message", "최종확정했습니다.");
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/improvements/" + id;
+    }
+
+    /** 완료로 올라온 건을 이전 단계(진행중·예정)로 되돌린다. 사유 필수 */
+    @PostMapping("/{id}/return")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String sendBack(@PathVariable Long id, @RequestParam(required = false) ActionResult target,
+                           @RequestParam(required = false) String reason,
+                           @AuthenticationPrincipal LoginUser user, RedirectAttributes ra) {
+        try {
+            service.sendBack(id, target, reason, user);
+            ra.addFlashAttribute("message", "이전 단계(" + target.getLabel() + ")로 되돌렸습니다. 담당자가 사유를 확인하고 다시 조치합니다.");
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -172,7 +187,7 @@ public class ImprovementController {
                          @AuthenticationPrincipal LoginUser user, RedirectAttributes ra) {
         try {
             service.reopen(id, reason, user);
-            ra.addFlashAttribute("message", "종결을 취소했습니다.");
+            ra.addFlashAttribute("message", "최종확정을 취소했습니다. 완료 검토 대기 상태로 돌아갑니다.");
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

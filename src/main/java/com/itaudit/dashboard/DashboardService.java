@@ -65,21 +65,21 @@ public class DashboardService {
         return rows;
     }
 
-    /** 미종결 건의 조치 결과별 건수 + 종결 건수 */
+    /** 최종확정 전 건의 조치 결과별 건수 + 최종확정 건수 */
     public List<CountRow> actionStats() {
         List<CountRow> raw = mapper.findActionStats();
         List<CountRow> rows = new ArrayList<>();
         for (ActionResult a : ActionResult.values()) {
             int n = raw.stream().filter(r -> "N".equals(r.getLabel()) && a.name().equals(r.getKey()))
                     .mapToInt(CountRow::getValue).sum();
-            rows.add(new CountRow(a.name(), a.getLabel() + (a == ActionResult.DONE ? " (종결 대기)" : ""), n));
+            rows.add(new CountRow(a.name(), a.getLabel() + (a == ActionResult.DONE ? " (주관자 검토 대기)" : ""), n));
         }
         int closed = raw.stream().filter(r -> "Y".equals(r.getLabel())).mapToInt(CountRow::getValue).sum();
-        rows.add(new CountRow("CLOSED", "종결", closed));
+        rows.add(new CountRow("CLOSED", "최종확정", closed));
         return rows;
     }
 
-    /** 미종결 개선사항·권고사항 전체 (개선예정일 순) */
+    /** 최종확정 전 개선사항·권고사항 전체 (개선예정일 순) */
     public List<Improvement> openImprovements() {
         ImprovementFilter f = new ImprovementFilter();
         f.setKind(null);

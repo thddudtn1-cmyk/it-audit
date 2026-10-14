@@ -222,7 +222,7 @@ public class ExcelExportService {
                 w.cell(r, c++, m.getDetail(), false, false);
                 w.cell(r, c++, m.getImprovementPlan(), false, false);
                 w.cell(r, c++, m.getPlannedDate() == null ? null : m.getPlannedDate().toString(), true, false);
-                w.cell(r, c++, m.getActionResult().getLabel() + (m.isClosed() ? " (종결)" : ""), true, false);
+                w.cell(r, c++, m.getActionResult().getLabel() + (m.isClosed() ? " (최종확정)" : m.isReviewPending() ? " (검토 대기)" : ""), true, false);
                 w.cell(r, c++, m.getActionStatus(), false, false);
                 w.cell(r, c, evidenceNames(m), false, false);
                 r++;

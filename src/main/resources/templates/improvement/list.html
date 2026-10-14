@@ -14,10 +14,10 @@
 
     <form method="get" th:action="@{/improvements}" class="filter-bar">
         <input type="hidden" name="kind" th:value="${filter.kind}">
-        <label>종결
+        <label>상태
             <select name="closed" onchange="this.form.submit()">
-                <option value="OPEN" th:selected="${filter.closed.name() == 'OPEN'}">미종결 (이월 포함)</option>
-                <option value="CLOSED" th:selected="${filter.closed.name() == 'CLOSED'}">종결</option>
+                <option value="OPEN" th:selected="${filter.closed.name() == 'OPEN'}">최종확정 전 (이월 포함)</option>
+                <option value="CLOSED" th:selected="${filter.closed.name() == 'CLOSED'}">최종확정</option>
                 <option value="ALL" th:selected="${filter.closed.name() == 'ALL'}">전체</option>
             </select>
         </label>
@@ -37,9 +37,13 @@
             <span>&nbsp;</span>
             <span><input type="checkbox" name="overdueOnly" value="true" th:checked="${filter.overdueOnly}" onchange="this.form.submit()"> 개선예정일 경과만</span>
         </label>
+        <label class="checkbox">
+            <span>&nbsp;</span>
+            <span><input type="checkbox" name="reviewPendingOnly" value="true" th:checked="${filter.reviewPendingOnly}" onchange="this.form.submit()"> 완료 검토 대기만</span>
+        </label>
         <noscript><button type="submit" class="button">조회</button></noscript>
         <span class="toolbar__actions filter-bar__right">
-            <a class="button" th:href="@{/improvements/export}" title="개선사항·권고사항 두 시트, 종결 포함 전체">엑셀 내보내기</a>
+            <a class="button" th:href="@{/improvements/export}" title="개선사항·권고사항 두 시트, 최종확정 포함 전체">엑셀 내보내기</a>
             <a sec:authorize="hasRole('AUDIT_LEAD')" th:unless="${rec}" class="button button--primary" th:href="@{/improvements/findings}">미흡 확정 건에서 등록</a>
             <a sec:authorize="hasAnyRole('AUDIT_DEPT','AUDIT_LEAD')" th:if="${rec}" class="button button--primary" th:href="@{/improvements/recommendations/new}">권고사항 등록</a>
         </span>
@@ -87,7 +91,9 @@
                 </td>
                 <td>
                     <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">예정</span>
-                    <span class="tag" th:if="${m.closed}">종결</span>
+                    <span class="tag status--done" th:if="${m.closed}">최종확정</span>
+                    <span class="tag tag--warn" th:if="${m.reviewPending}">검토 대기</span>
+                    <span class="tag tag--danger" th:if="${m.returned}" th:title="${m.returnComment}">반려됨</span>
                 </td>
                 <td class="pre small" th:text="${m.actionStatus}">현황</td>
                 <td class="num" th:text="${m.evidenceCount > 0} ? |${m.evidenceCount}건| : '-'">-</td>
@@ -96,7 +102,7 @@
             </tbody>
         </table>
     </div>
-    <p class="small muted">붉은 행: 개선예정일 경과 · 노란 행: 7일 이내 임박 · 미종결 건은 분기가 바뀌어도 계속 표시됩니다.</p>
+    <p class="small muted">붉은 행: 개선예정일 경과 · 노란 행: 7일 이내 임박 · 조치 결과가 '완료'가 되면 주관자가 검토해 최종확정하거나 이전 단계로 되돌립니다 · 최종확정 전 건은 분기가 바뀌어도 계속 표시됩니다.</p>
 </main>
 
 </body>

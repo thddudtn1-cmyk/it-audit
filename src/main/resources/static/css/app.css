@@ -448,3 +448,10 @@ form.inline { display: inline; }
 .rs--passed { background: #e7f6ec; color: #1e6b3a; }
 .rs--finding { background: var(--c-error-bg); color: var(--c-error); }
 .table--checklist td.cell-wide { min-width: 220px; }
+
+/* 개선사항 완료 검토 */
+.kpi--attention { border-color: #f0b429; }
+.kpi--attention .kpi__value { color: #8a5a00; }
+.review-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.review-actions-grid h4 { margin: 0 0 8px; font-size: 14px; }
+.review-actions-grid .form { border: 1px solid var(--c-border); border-radius: 6px; padding: 12px; margin: 0; }

@@ -47,6 +47,7 @@ public class DashboardController {
         model.addAttribute("actions", actions);
         model.addAttribute("actionMax", DashboardService.max(actions));
         model.addAttribute("openCount", open.size());
+        model.addAttribute("reviewPendingCount", open.stream().filter(Improvement::isReviewPending).count());
         model.addAttribute("overdue", overdue);
         model.addAttribute("dueSoon", dueSoon);
         return "dashboard/index";

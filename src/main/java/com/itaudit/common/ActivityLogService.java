@@ -46,6 +46,7 @@ public class ActivityLogService {
     public static final String IMPROVEMENT_UPDATE = "IMPROVEMENT_UPDATE";
     public static final String IMPROVEMENT_CLOSE = "IMPROVEMENT_CLOSE";
     public static final String IMPROVEMENT_REOPEN = "IMPROVEMENT_REOPEN";
+    public static final String IMPROVEMENT_RETURN = "IMPROVEMENT_RETURN";
     public static final String EXCEL_EXPORT = "EXCEL_EXPORT";
     public static final String COMMENT_ADD = "COMMENT_ADD";
     public static final String COMMENT_DELETE = "COMMENT_DELETE";

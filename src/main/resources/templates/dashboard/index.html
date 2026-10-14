@@ -30,9 +30,14 @@
             <span class="kpi__sub" th:text="|${round.submittedCount} / ${round.submitTargetCount}건 · ${round.status.label}|">7/14</span>
         </div>
         <div class="kpi">
-            <span class="kpi__label">미종결 개선·권고</span>
+            <span class="kpi__label">최종확정 전 개선·권고</span>
             <span class="kpi__value" th:text="${openCount}">5</span>
             <a class="kpi__sub" th:href="@{/improvements}">관리대장 보기</a>
+        </div>
+        <div class="kpi" th:classappend="${reviewPendingCount > 0} ? 'kpi--attention'">
+            <span class="kpi__label">완료 검토 대기</span>
+            <span class="kpi__value" th:text="${reviewPendingCount}">0</span>
+            <a class="kpi__sub" th:href="@{/improvements(reviewPendingOnly=true)}">주관자 최종확정·반려 대기</a>
         </div>
         <div class="kpi" th:classappend="${!#lists.isEmpty(overdue)} ? 'kpi--critical'">
             <span class="kpi__label"><span class="status-icon" aria-hidden="true" th:if="${!#lists.isEmpty(overdue)}">!</span> 개선예정일 경과</span>
@@ -98,7 +103,7 @@
         <!-- 조치 결과별 건수 -->
         <section class="panel chart">
             <h3>개선사항·권고사항 조치 결과</h3>
-            <p class="chart__note">전체 회차 누적 · 종결 전 건은 조치 결과별, 종결 건은 따로</p>
+            <p class="chart__note">전체 회차 누적 · 최종확정 전 건은 조치 결과별, 최종확정 건은 따로</p>
             <ul class="bar-list">
                 <li th:each="a : ${actions}" class="bar-row" tabindex="0" th:attr="data-tip=|${a.label} ${a.value}건|">
                     <span class="bar-row__label" th:text="${a.label}">예정</span>

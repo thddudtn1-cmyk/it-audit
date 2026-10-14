@@ -37,6 +37,10 @@ public class Improvement {
     private Long closedBy;
     private LocalDateTime closedAt;
     private String closeComment;
+    /** 마지막 반려(완료 → 이전 단계) 사유. 담당자가 다시 완료로 올리면 지운다 */
+    private String returnComment;
+    private Long returnedBy;
+    private LocalDateTime returnedAt;
     private Long createdBy;
     private LocalDateTime createdAt;
     private Long updatedBy;
@@ -52,6 +56,16 @@ public class Improvement {
 
     public boolean isClosed() {
         return "Y".equals(closedYn);
+    }
+
+    /** 담당자가 조치 결과를 '완료'로 올려 주관자의 최종확정·반려를 기다리는 상태 */
+    public boolean isReviewPending() {
+        return !isClosed() && actionResult == ActionResult.DONE;
+    }
+
+    /** 주관자가 반려한 뒤 담당자가 아직 다시 완료하지 않은 상태 (반려 사유를 보여 준다) */
+    public boolean isReturned() {
+        return !isClosed() && actionResult != ActionResult.DONE && returnComment != null;
     }
 
     /** ⑤ '감사 시기' = 발생 회차 (예: 2026 3Q) */
@@ -126,6 +140,12 @@ public class Improvement {
     public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
     public String getCloseComment() { return closeComment; }
     public void setCloseComment(String closeComment) { this.closeComment = closeComment; }
+    public String getReturnComment() { return returnComment; }
+    public void setReturnComment(String returnComment) { this.returnComment = returnComment; }
+    public Long getReturnedBy() { return returnedBy; }
+    public void setReturnedBy(Long returnedBy) { this.returnedBy = returnedBy; }
+    public LocalDateTime getReturnedAt() { return returnedAt; }
+    public void setReturnedAt(LocalDateTime returnedAt) { this.returnedAt = returnedAt; }
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }

@@ -41,8 +41,10 @@ import com.itaudit.round.RoundStatus;
 /**
  * 개선사항·권고사항 관리 (F-07).
  * 개선사항은 주관자가 감사부서 '미흡 확정' 건에서 만들고, 권고사항은 감사부서·주관자가 회차 항목을 골라 만든다.
- * 담당자는 조치 정보(개선 방안·개선예정일·조치 결과·조치 현황·증빙자료)를 갱신하고, 주관자가 종결한다.
- * 종결하지 않은 건은 분기가 바뀌어도 대장에 남아 다음 분기로 이어진다.
+ * 담당자는 조치 정보(개선 방안·개선예정일·조치 결과·조치 현황·증빙자료)를 갱신한다.
+ * 조치 결과가 '완료'가 되면 주관자가 검토해 최종확정(= 종결)하거나 이전 단계(진행중·예정)로 되돌린다.
+ * 검토를 기다리는 동안 담당자는 수정할 수 없고, 되돌려지면 사유를 보며 다시 수정한다.
+ * 최종확정하지 않은 건은 분기가 바뀌어도 대장에 남아 다음 분기로 이어진다.
  * [가정] 오픈 이슈 '개선필요 등급도 관리대장에 올릴지'는 감사부서가 개선필요로 미흡 확정한 건이면 올릴 수 있게 했다
  *        (등급으로 자동 제외하지 않고, 확정 여부로만 판단).
  */
@@ -78,7 +80,7 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         return withItems(mapper.findByFilter(filter, LocalDate.now()));
     }
 
-    /** 담당자 본인의 미종결 건 (내 할 일, 개선예정일 순) */
+    /** 담당자 본인의 최종확정 전 건 (내 할 일, 개선예정일 순) */
     public List<Improvement> findMyOpen(LoginUser user) {
         List<Improvement> result = new ArrayList<>();
         for (ImprovementKind kind : ImprovementKind.values()) {
@@ -269,7 +271,8 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
     /**
      * 주관자: 전체 수정·종결 / 감사부서: 권고사항의 관리 정보 / 담당자(본인 건): 조치 정보.
      * 관리 정보 = 담당부서/담당자·점검 결과·내용, 조치 정보 = 개선 방안·개선예정일·조치 결과·조치 현황·증빙자료.
-     * 종결된 건은 아무도 고칠 수 없다 (종결 취소 후 수정).
+     * 최종확정된 건은 아무도 고칠 수 없다 (최종확정 취소 후 수정).
+     * 조치 결과가 '완료'로 올라와 주관자 검토를 기다리는 동안은 담당자도 고칠 수 없다 (주관자가 되돌리면 다시 수정).
      */
     public Permissions permissions(Improvement m, LoginUser user) {
         if (m.isClosed()) {
@@ -278,7 +281,8 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         return switch (user.getRole()) {
             case AUDIT_LEAD -> new Permissions(true, true, true);
             case AUDIT_DEPT -> new Permissions(m.getKind() == ImprovementKind.RECOMMENDATION, false, false);
-            case INSPECTOR -> new Permissions(false, Objects.equals(m.getAssigneeId(), user.getUserId()), false);
+            case INSPECTOR -> new Permissions(false,
+                    Objects.equals(m.getAssigneeId(), user.getUserId()) && !m.isReviewPending(), false);
             default -> new Permissions(false, false, false);
         };
     }
@@ -288,7 +292,10 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         Improvement m = get(id, actor);
         Permissions p = permissions(m, actor);
         if (!p.any()) {
-            throw new BusinessException(m.isClosed() ? "종결된 건은 수정할 수 없습니다." : "수정 권한이 없습니다.");
+            throw new BusinessException(m.isClosed() ? "최종확정된 건은 수정할 수 없습니다."
+                    : m.isReviewPending() && actor.getRole() == Role.INSPECTOR
+                    ? "완료로 보고되어 주관자가 검토 중입니다. 주관자가 이전 단계로 되돌리면 다시 수정할 수 있습니다."
+                    : "수정 권한이 없습니다.");
         }
         List<MultipartFile> newFiles = files == null ? List.of() : files.stream().filter(f -> f != null && !f.isEmpty()).toList();
         if (!newFiles.isEmpty() && !p.action()) {
@@ -318,8 +325,15 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
             if (form.getActionResult() == null) {
                 throw new BusinessException("조치 결과를 고르세요.");
             }
+            ActionResult previous = m.getActionResult();
             m.setActionResult(form.getActionResult());
             m.setActionStatus(optional(form.getActionStatus(), "조치 현황", 2000));
+            if (m.getActionResult() == ActionResult.DONE && previous != ActionResult.DONE) {
+                // 다시 완료로 올리면 이전 반려 사유는 지운다 (반려 이력은 감사 로그에 남아 있다)
+                m.setReturnComment(null);
+                m.setReturnedBy(null);
+                m.setReturnedAt(null);
+            }
             if (m.getActionResult() == ActionResult.DONE && !StringUtils.hasText(m.getActionStatus())) {
                 throw new BusinessException("조치 결과를 '완료'로 하려면 조치 현황을 입력하세요.");
             }
@@ -336,35 +350,64 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         }
     }
 
-    // ---------- 종결 (주관자) ----------
+    // ---------- 완료 검토: 최종확정 또는 이전 단계로 되돌림 (주관자) ----------
 
     @Transactional
     public void close(Long id, String comment, LoginUser actor) {
         Improvement m = get(id, actor);
         if (m.isClosed()) {
-            throw new BusinessException("이미 종결된 건입니다.");
+            throw new BusinessException("이미 최종확정된 건입니다.");
         }
         if (m.getActionResult() != ActionResult.DONE) {
-            throw new BusinessException("조치 결과가 '완료'인 건만 종결할 수 있습니다.");
+            throw new BusinessException("조치 결과가 '완료'인 건만 최종확정할 수 있습니다.");
         }
         LocalDateTime now = LocalDateTime.now();
-        mapper.updateClosed(id, "Y", actor.getUserId(), now, optional(comment, "종결 의견", 1000), now);
+        mapper.updateClosed(id, "Y", actor.getUserId(), now, optional(comment, "최종확정 의견", 1000), now);
         activityLog.log(ActivityLogService.IMPROVEMENT_CLOSE, "IMPROVEMENT", id,
-                m.getKind().getLabel() + " 종결" + (StringUtils.hasText(comment) ? ", 의견=" + comment.trim() : ""));
+                m.getKind().getLabel() + " 최종 확정" + (StringUtils.hasText(comment) ? ", 의견=" + comment.trim() : ""));
     }
 
-    /** 종결 취소: 사유 필수, 종결 이력은 활동 이력에 남는다 */
+    /**
+     * 완료 반려: 조치 결과를 이전 단계(진행중·예정)로 되돌린다. 사유는 필수이며 담당자에게 보인다.
+     * 담당자는 되돌려진 뒤 다시 수정해 완료로 올릴 수 있다.
+     */
+    @Transactional
+    public void sendBack(Long id, ActionResult target, String reason, LoginUser actor) {
+        Improvement m = get(id, actor);
+        if (m.isClosed()) {
+            throw new BusinessException("이미 최종확정된 건입니다. 최종확정을 취소한 뒤 검토하세요.");
+        }
+        if (m.getActionResult() != ActionResult.DONE) {
+            throw new BusinessException("조치 결과가 '완료'인 건만 검토할 수 있습니다.");
+        }
+        if (target == null || target == ActionResult.DONE) {
+            throw new BusinessException("되돌릴 이전 단계(진행중·예정)를 고르세요.");
+        }
+        String r = required(reason, "반려 사유", 1000);
+        LocalDateTime now = LocalDateTime.now();
+        m.setActionResult(target);
+        m.setReturnComment(r);
+        m.setReturnedBy(actor.getUserId());
+        m.setReturnedAt(now);
+        m.setUpdatedBy(actor.getUserId());
+        m.setUpdatedAt(now);
+        mapper.update(m);
+        activityLog.log(ActivityLogService.IMPROVEMENT_RETURN, "IMPROVEMENT", id,
+                m.getKind().getLabel() + " 완료 반려 → " + target.getLabel() + ", 사유=" + r);
+    }
+
+    /** 최종확정 취소: 사유 필수, 최종확정 이력은 활동 이력에 남는다. 취소하면 '완료(검토 대기)'로 돌아간다 */
     @Transactional
     public void reopen(Long id, String reason, LoginUser actor) {
         Improvement m = get(id, actor);
         if (!m.isClosed()) {
-            throw new BusinessException("종결된 건이 아닙니다.");
+            throw new BusinessException("최종확정된 건이 아닙니다.");
         }
-        String r = required(reason, "종결 취소 사유", 1000);
+        String r = required(reason, "최종확정 취소 사유", 1000);
         LocalDateTime now = LocalDateTime.now();
         mapper.updateClosed(id, "N", null, null, null, now);
         activityLog.log(ActivityLogService.IMPROVEMENT_REOPEN, "IMPROVEMENT", id,
-                m.getKind().getLabel() + " 종결 취소, 사유=" + r + " (기존 종결일 " + m.getClosedAt() + ")");
+                m.getKind().getLabel() + " 최종 확정 취소, 사유=" + r + " (기존 최종확정일 " + m.getClosedAt() + ")");
     }
 
     // ---------- 다른 기능과의 연결 ----------
@@ -392,7 +435,7 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
     @Override
     public void checkModify(Long ownerId, LoginUser user) {
         if (!permissions(get(ownerId, user), user).action()) {
-            throw new BusinessException("증빙자료를 바꿀 수 없습니다 (담당자·주관자만, 종결 전까지).");
+            throw new BusinessException("증빙자료를 바꿀 수 없습니다 (담당자·주관자만, 완료 검토 전까지).");
         }
     }
 

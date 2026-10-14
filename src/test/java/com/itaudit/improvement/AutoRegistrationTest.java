@@ -210,7 +210,7 @@ class AutoRegistrationTest {
         assertThat(roundMapper.findRound(roundId).getImprovementCount()).isEqualTo(1);
 
         mvc.perform(post("/rounds/delete").with(user(lead)).with(csrf()).param("roundIds", String.valueOf(roundId)))
-                .andExpect(flash().attribute("errorMessage", Matchers.containsString("조치가 진행·종결되었거나")));
+                .andExpect(flash().attribute("errorMessage", Matchers.containsString("조치가 진행·최종확정되었거나")));
         assertThat(roundMapper.findRound(roundId)).isNotNull();
         assertThat(registry()).hasSize(3);
 

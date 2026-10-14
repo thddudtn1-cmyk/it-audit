@@ -5,7 +5,7 @@
     <sql id="select">
         SELECT m.improvement_id, m.kind, m.origin, m.round_id, m.team_code, m.assignee_id, m.inspection_result, m.detail,
                m.improvement_plan, m.planned_date, m.action_result, m.action_status, m.closed_yn, m.closed_by,
-               m.closed_at, m.close_comment, m.created_by, m.created_at, m.updated_by, m.updated_at,
+               m.closed_at, m.close_comment, m.return_comment, m.returned_by, m.returned_at, m.created_by, m.created_at, m.updated_by, m.updated_at,
                r.round_year, r.quarter, t.team_name, u.user_name AS assignee_name,
                (SELECT COUNT(*) FROM evidence e
                  WHERE e.owner_type = 'IMPROVEMENT' AND e.owner_id = m.improvement_id AND e.deleted_yn = 'N') AS evidence_count
@@ -24,6 +24,7 @@
             <if test="f.actionResult != null">AND m.action_result = #{f.actionResult}</if>
             <if test="f.roundId != null">AND m.round_id = #{f.roundId}</if>
             <if test="f.assigneeId != null">AND m.assignee_id = #{f.assigneeId}</if>
+            <if test="f.reviewPendingOnly">AND m.closed_yn = 'N' AND m.action_result = 'DONE'</if>
             <if test="f.overdueOnly">AND m.closed_yn = 'N' AND m.planned_date &lt; #{today}</if>
         </where>
          ORDER BY m.closed_yn,
@@ -95,6 +96,9 @@
                planned_date = #{plannedDate},
                action_result = #{actionResult},
                action_status = #{actionStatus},
+               return_comment = #{returnComment},
+               returned_by = #{returnedBy},
+               returned_at = #{returnedAt},
                updated_by = #{updatedBy},
                updated_at = #{updatedAt}
          WHERE improvement_id = #{improvementId}
