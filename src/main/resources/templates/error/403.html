@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('권한 없음')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2>권한 없음</h2>
+    <div class="panel empty">이 화면에 접근할 권한이 없습니다. <a th:href="@{/}">첫 화면으로</a></div>
+</main>
+</body>
+</html>

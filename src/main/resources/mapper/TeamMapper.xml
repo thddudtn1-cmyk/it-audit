@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.admin.TeamMapper">
+
+    <select id="findAll" resultType="com.itaudit.admin.Team">
+        SELECT team_code, team_name, sort_order, use_yn, created_at, updated_at
+          FROM team
+         ORDER BY use_yn DESC, sort_order, team_code
+    </select>
+
+    <select id="findActive" resultType="com.itaudit.admin.Team">
+        SELECT team_code, team_name, sort_order, use_yn, created_at, updated_at
+          FROM team
+         WHERE use_yn = 'Y'
+         ORDER BY sort_order, team_code
+    </select>
+
+    <select id="findByCode" resultType="com.itaudit.admin.Team">
+        SELECT team_code, team_name, sort_order, use_yn, created_at, updated_at
+          FROM team
+         WHERE team_code = #{teamCode}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO team (team_code, team_name, sort_order, use_yn, created_at, updated_at)
+        VALUES (#{teamCode}, #{teamName}, #{sortOrder}, #{useYn}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="update">
+        UPDATE team
+           SET team_name = #{teamName},
+               sort_order = #{sortOrder},
+               use_yn = #{useYn},
+               updated_at = #{updatedAt}
+         WHERE team_code = #{teamCode}
+    </update>
+</mapper>

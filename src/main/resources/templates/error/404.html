@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('페이지 없음')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2>페이지 없음</h2>
+    <div class="panel empty">요청한 화면을 찾을 수 없습니다. <a th:href="@{/}">첫 화면으로</a></div>
+</main>
+</body>
+</html>

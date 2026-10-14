@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('담당팀 코드')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2>관리</h2>
+    <nav th:replace="~{admin/tabs :: tabs('teams')}"></nav>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form th:action="@{/admin/teams}" th:object="${form}" method="post" class="form form--inline panel">
+        <input type="text" th:field="*{teamCode}" placeholder="팀 코드 (예: INFRA)" required>
+        <input type="text" th:field="*{teamName}" placeholder="팀 이름" required>
+        <input type="number" th:field="*{sortOrder}" placeholder="정렬" class="input--short">
+        <button type="submit" class="button button--primary">추가</button>
+        <small class="error" th:if="${#fields.hasErrors('*')}" th:errors="*{*}"></small>
+    </form>
+
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+            <tr><th>팀 코드</th><th>팀 이름</th><th>정렬</th><th>사용</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="t : ${teams}" th:classappend="${!t.active} ? 'row--inactive'">
+                <td th:text="${t.teamCode}">CODE</td>
+                <td colspan="4">
+                    <form th:action="@{/admin/teams/{c}(c=${t.teamCode})}" method="post" class="form--row">
+                        <input type="text" name="teamName" th:value="${t.teamName}" required>
+                        <input type="number" name="sortOrder" th:value="${t.sortOrder}" class="input--short">
+                        <label class="checkbox"><input type="checkbox" name="active" value="true" th:checked="${t.active}"> 사용</label>
+                        <button type="submit" class="button">저장</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(teams)}"><td colspan="5" class="empty">등록된 담당팀이 없습니다.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

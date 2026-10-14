@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="tabs(active)" class="tabs">
+    <a th:href="@{/admin/users}" th:classappend="${active == 'users'} ? 'active'">사용자</a>
+    <a th:href="@{/admin/teams}" th:classappend="${active == 'teams'} ? 'active'">담당팀 코드</a>
+</nav>
+</body>
+</html>

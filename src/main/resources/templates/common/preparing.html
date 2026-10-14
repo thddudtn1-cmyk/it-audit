@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${menu.label})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2 th:text="${menu.label}">메뉴</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="panel empty" th:text="|준비 중인 화면입니다 (${menu.featureId}).|">준비 중</div>
+</main>
+</body>
+</html>

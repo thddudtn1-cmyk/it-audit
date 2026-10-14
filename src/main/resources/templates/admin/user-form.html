@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${userId == null} ? '사용자 등록' : '사용자 수정')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--narrow">
+    <h2 th:text="${userId == null} ? '사용자 등록' : '사용자 수정'">사용자</h2>
+    <nav th:replace="~{admin/tabs :: tabs('users')}"></nav>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form th:object="${form}" method="post" class="form"
+          th:action="${userId == null} ? @{/admin/users} : @{/admin/users/{id}(id=${userId})}">
+        <label>아이디
+            <input type="text" th:field="*{loginId}" th:readonly="${userId != null}" required>
+            <small class="error" th:if="${#fields.hasErrors('loginId')}" th:errors="*{loginId}"></small>
+        </label>
+        <label>이름
+            <input type="text" th:field="*{userName}" required>
+            <small class="error" th:if="${#fields.hasErrors('userName')}" th:errors="*{userName}"></small>
+        </label>
+        <label>담당팀
+            <select th:field="*{teamCode}">
+                <option value="">(없음)</option>
+                <option th:each="t : ${teams}" th:value="${t.teamCode}" th:text="${t.teamName}">팀</option>
+            </select>
+            <small>점검 담당자는 담당팀이 필수입니다.</small>
+        </label>
+        <label>역할
+            <select th:field="*{roleCode}" required>
+                <option value="">선택</option>
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}">역할</option>
+            </select>
+            <small class="error" th:if="${#fields.hasErrors('roleCode')}" th:errors="*{roleCode}"></small>
+        </label>
+        <label th:if="${userId == null}">초기 비밀번호
+            <input type="password" th:field="*{initialPassword}" autocomplete="new-password" required>
+            <small th:text="${policy} + ' · 사용자가 첫 로그인 때 변경합니다.'">규칙</small>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" th:field="*{active}"> 사용
+        </label>
+        <div class="form__actions">
+            <a class="button" th:href="@{/admin/users}">목록</a>
+            <button type="submit" class="button button--primary">저장</button>
+        </div>
+    </form>
+
+    <section th:if="${userId != null}" class="panel">
+        <h3>비밀번호 재설정</h3>
+        <form th:action="@{/admin/users/{id}/reset-password(id=${userId})}" method="post" class="form form--inline">
+            <input type="password" name="newPassword" autocomplete="new-password" placeholder="새 임시 비밀번호" required>
+            <button type="submit" class="button">재설정</button>
+        </form>
+        <small th:text="${policy} + ' · 재설정 후 사용자가 다음 로그인 때 변경합니다.'">규칙</small>
+    </section>
+</main>
+</body>
+</html>

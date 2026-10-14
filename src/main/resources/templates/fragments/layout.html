@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' - IT 자체감사'">IT 자체감사</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header th:fragment="header" class="app-header">
+    <div class="app-header__top">
+        <a class="app-header__brand" th:href="@{/}">IT 자체감사 관리</a>
+        <div class="app-header__user" th:if="${loginUser != null}">
+            <span>
+                <strong th:text="${loginUser.userName}">홍길동</strong>
+                <span class="badge" th:text="${loginUser.role.label}">역할</span>
+            </span>
+            <a th:href="@{/account/password}">비밀번호 변경</a>
+            <form th:action="@{/logout}" method="post" class="inline">
+                <button type="submit" class="link-button">로그아웃</button>
+            </form>
+        </div>
+    </div>
+    <nav class="app-nav" th:if="${loginUser != null and !loginUser.passwordChangeRequired}">
+        <a th:each="m : ${menus}" th:href="@{${m.path}}" th:text="${m.label}"
+           th:classappend="${currentPath.startsWith(m.path)} ? 'active'">메뉴</a>
+    </nav>
+</header>
+
+<div th:fragment="flash">
+    <div class="alert alert--info" th:if="${message}" th:text="${message}">안내</div>
+    <div class="alert alert--error" th:if="${errorMessage}" th:text="${errorMessage}">오류</div>
+</div>
+
+</body>
+</html>

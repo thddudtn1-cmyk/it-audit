@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('사용자 관리')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2>관리</h2>
+    <nav th:replace="~{admin/tabs :: tabs('users')}"></nav>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="toolbar">
+        <span th:text="|총 ${#lists.size(users)}명|">총 0명</span>
+        <a class="button button--primary" th:href="@{/admin/users/new}">사용자 등록</a>
+    </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>아이디</th><th>이름</th><th>담당팀</th><th>역할</th><th>사용</th><th>최근 로그인</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${users}" th:classappend="${!u.active} ? 'row--inactive'">
+                <td th:text="${u.loginId}">id</td>
+                <td th:text="${u.userName}">이름</td>
+                <td th:text="${u.teamName} ?: '-'">팀</td>
+                <td th:text="${u.roleCode.label}">역할</td>
+                <td th:text="${u.active} ? '사용' : '중지'">사용</td>
+                <td th:text="${u.lastLoginAt != null} ? ${#temporals.format(u.lastLoginAt, 'yyyy-MM-dd HH:mm')} : '-'">-</td>
+                <td><a th:href="@{/admin/users/{id}/edit(id=${u.userId})}">수정</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(users)}"><td colspan="7" class="empty">등록된 사용자가 없습니다.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('오류')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2>오류</h2>
+    <div class="panel empty">처리 중 오류가 발생했습니다. <a th:href="@{/}">첫 화면으로</a></div>
+</main>
+</body>
+</html>
