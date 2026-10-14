@@ -16,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.itaudit.auth.LoginUser;
+import com.itaudit.comment.CommentService;
+import com.itaudit.comment.CommentTarget;
 import com.itaudit.common.BusinessException;
 import com.itaudit.evidence.EvidenceOwnerType;
 import com.itaudit.evidence.EvidenceService;
@@ -31,10 +33,13 @@ public class ImprovementController {
 
     private final ImprovementService service;
     private final EvidenceService evidenceService;
+    private final CommentService commentService;
 
-    public ImprovementController(ImprovementService service, EvidenceService evidenceService) {
+    public ImprovementController(ImprovementService service, EvidenceService evidenceService,
+                                 CommentService commentService) {
         this.service = service;
         this.evidenceService = evidenceService;
+        this.commentService = commentService;
     }
 
     @GetMapping
@@ -183,6 +188,8 @@ public class ImprovementController {
         model.addAttribute("findingResults", FINDING_RESULTS);
         model.addAttribute("actionResults", ActionResult.values());
         model.addAttribute("evidences", evidenceService.findActive(EvidenceOwnerType.IMPROVEMENT, m.getImprovementId()));
+        model.addAttribute("comments", commentService.find(CommentTarget.IMPROVEMENT, m.getImprovementId(), user));
+        model.addAttribute("canComment", commentService.canWrite(user));
         return "improvement/detail";
     }
 }

@@ -85,6 +85,8 @@
         <input type="hidden" name="returnUrl" th:value="|/improvements/${m.improvementId}|">
     </form>
 
+    <th:block th:replace="~{fragments/comments :: box('IMPROVEMENT', ${m.improvementId}, ${comments}, ${canComment})}"></th:block>
+
     <!-- 종결 (주관자) -->
     <section class="panel" th:if="${perm.close}">
         <h3>종결</h3>

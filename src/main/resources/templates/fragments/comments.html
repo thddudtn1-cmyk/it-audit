@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- F-12 코멘트: targetType = ROUND_ITEM | IMPROVEMENT -->
+<section th:fragment="box(targetType, targetId, comments, canWrite)" class="panel" id="comments">
+    <h3 th:text="|코멘트 ${#lists.size(comments)}건|">코멘트</h3>
+    <ul class="comment-list" th:if="${!#lists.isEmpty(comments)}">
+        <li th:each="c : ${comments}" class="comment">
+            <div class="comment__head">
+                <strong th:text="${c.authorName}">홍길동</strong>
+                <span class="tag" th:text="${c.authorRole.label}">역할</span>
+                <span class="muted small" th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">2026-10-14 10:00</span>
+                <form th:if="${c.authorId == loginUser.userId or loginUser.role.name() == 'AUDIT_LEAD'}"
+                      th:action="@{/comments/{id}/delete(id=${c.commentId})}" method="post" class="inline">
+                    <button type="submit" class="link-button small">삭제</button>
+                </form>
+            </div>
+            <div class="pre" th:text="${c.body}">내용</div>
+        </li>
+    </ul>
+    <p class="muted" th:if="${#lists.isEmpty(comments)}">아직 코멘트가 없습니다.</p>
+    <form th:if="${canWrite}" th:action="@{/comments}" method="post" class="form">
+        <input type="hidden" name="targetType" th:value="${targetType}">
+        <input type="hidden" name="targetId" th:value="${targetId}">
+        <textarea name="body" rows="3" maxlength="2000" required placeholder="의견을 남기세요 (주관자·담당자·감사부서)" class="input--block"></textarea>
+        <div class="form__actions"><button type="submit" class="button button--primary">코멘트 남기기</button></div>
+    </form>
+</section>
+</body>
+</html>

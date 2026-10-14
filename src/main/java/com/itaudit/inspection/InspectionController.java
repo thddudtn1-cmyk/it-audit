@@ -14,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.itaudit.auth.LoginUser;
+import com.itaudit.comment.CommentService;
+import com.itaudit.comment.CommentTarget;
 import com.itaudit.common.BusinessException;
 import com.itaudit.evidence.EvidenceOwnerType;
 import com.itaudit.evidence.EvidenceService;
@@ -30,9 +32,12 @@ public class InspectionController {
     private final EvidenceService evidenceService;
     private final AuditRequestService requestService;
     private final ImprovementService improvementService;
+    private final CommentService commentService;
 
     public InspectionController(InspectionService service, EvidenceService evidenceService,
-                                AuditRequestService requestService, ImprovementService improvementService) {
+                                AuditRequestService requestService, ImprovementService improvementService,
+                                CommentService commentService) {
+        this.commentService = commentService;
         this.service = service;
         this.evidenceService = evidenceService;
         this.requestService = requestService;
@@ -85,6 +90,8 @@ public class InspectionController {
         model.addAttribute("history", service.findHistory(t));
         // F-10: 같은 항목의 개선사항·권고사항 이력
         model.addAttribute("improvementHistory", improvementService.findHistory(t.item().getSeqNo()));
+        model.addAttribute("comments", commentService.find(CommentTarget.ROUND_ITEM, t.item().getRoundItemId(), user));
+        model.addAttribute("canComment", commentService.canWrite(user));
         return "inspection/form";
     }
 }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.comment.CommentMapper">
+
+    <sql id="select">
+        SELECT c.comment_id, c.target_type, c.target_id, c.body, c.author_id, u.user_name AS author_name,
+               u.role_code AS author_role, c.created_at, c.deleted_yn
+          FROM comment_note c
+          JOIN app_user u ON u.user_id = c.author_id
+    </sql>
+
+    <select id="findActive" resultType="com.itaudit.comment.Comment">
+        <include refid="select"/>
+         WHERE c.target_type = #{targetType} AND c.target_id = #{targetId} AND c.deleted_yn = 'N'
+         ORDER BY c.comment_id
+    </select>
+
+    <select id="findById" resultType="com.itaudit.comment.Comment">
+        <include refid="select"/>
+         WHERE c.comment_id = #{commentId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="commentId" keyColumn="comment_id">
+        INSERT INTO comment_note (target_type, target_id, body, author_id, created_at, deleted_yn)
+        VALUES (#{targetType}, #{targetId}, #{body}, #{authorId}, #{createdAt}, 'N')
+    </insert>
+
+    <update id="markDeleted">
+        UPDATE comment_note
+           SET deleted_yn = 'Y', deleted_by = #{deletedBy}, deleted_at = #{deletedAt}
+         WHERE comment_id = #{commentId} AND deleted_yn = 'N'
+    </update>
+</mapper>

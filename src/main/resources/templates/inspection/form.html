@@ -93,6 +93,8 @@
         <input type="hidden" name="returnUrl" th:value="|/inspections/${item.roundItemId}|">
     </form>
 
+    <th:block th:replace="~{fragments/comments :: box('ROUND_ITEM', ${item.roundItemId}, ${comments}, ${canComment})}"></th:block>
+
     <!-- 지난 회차 이력 -->
     <section class="panel">
         <h3>지난 회차 이력</h3>
