@@ -213,4 +213,50 @@ class CompletionReviewTest {
         }
         assertThat(current().isReviewPending()).isTrue();
     }
+
+    // ---------- 관리대장 목록에서 바로 검토 ----------
+
+    @Test
+    void 관리대장_목록에서_완료된_건에_검토완료와_반려_버튼이_보인다() throws Exception {
+        // 진행중: 버튼 없음
+        String before = mvc.perform(get("/improvements").with(user(lead))).andReturn().getResponse().getContentAsString();
+        assertThat(before).contains("완료 검토").doesNotContain("검토완료(최종확정)");
+
+        mvc.perform(complete(kim));
+        String html = mvc.perform(get("/improvements").with(user(lead))).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("검토완료(최종확정)").contains("action=\"/improvements/" + id + "/close\"")
+                .contains("action=\"/improvements/" + id + "/return\"").contains("name=\"from\" value=\"list\"")
+                .contains("row--review");
+
+        // 다른 역할 목록에는 검토 열·버튼이 없다
+        for (LoginUser u : List.of(kim, dept, testUsers.user("cr-viewer2", Role.VIEWER))) {
+            String other = mvc.perform(get("/improvements").with(user(u))).andReturn().getResponse().getContentAsString();
+            assertThat(other).doesNotContain("검토완료(최종확정)").doesNotContain("완료 검토</th>");
+        }
+    }
+
+    @Test
+    void 목록에서_반려하면_목록으로_돌아오고_사유가_저장된다() throws Exception {
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/return").with(user(lead)).with(csrf())
+                        .param("from", "list").param("target", "IN_PROGRESS").param("reason", "목록에서 반려"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements?kind=IMPROVEMENT"))
+                .andExpect(flash().attribute("message", Matchers.containsString("이전 단계(진행중)로 되돌렸습니다")));
+        assertThat(current().getReturnComment()).isEqualTo("목록에서 반려");
+        mvc.perform(get("/improvements").with(user(lead)))
+                .andExpect(content().string(Matchers.containsString("반려됨")));
+    }
+
+    @Test
+    void 목록에서_검토완료하면_목록으로_돌아오고_최종확정된다() throws Exception {
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()).param("from", "list"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements?kind=IMPROVEMENT"))
+                .andExpect(flash().attribute("message", "최종확정했습니다."));
+        assertThat(current().isClosed()).isTrue();
+        // 상세에서 처리하면 기존처럼 상세로
+        mvc.perform(post("/improvements/" + id + "/reopen").param("reason", "x").with(user(lead)).with(csrf()));
+        mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements/" + id));
+    }
 }

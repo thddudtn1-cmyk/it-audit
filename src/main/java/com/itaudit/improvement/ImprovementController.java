@@ -156,6 +156,7 @@ public class ImprovementController {
     @PostMapping("/{id}/close")
     @PreAuthorize("hasRole('AUDIT_LEAD')")
     public String close(@PathVariable Long id, @RequestParam(required = false) String comment,
+                        @RequestParam(required = false) String from,
                         @AuthenticationPrincipal LoginUser user, RedirectAttributes ra) {
         try {
             service.close(id, comment, user);
@@ -163,7 +164,7 @@ public class ImprovementController {
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/improvements/" + id;
+        return afterReview(id, from, user);
     }
 
     /** 완료로 올라온 건을 이전 단계(진행중·예정)로 되돌린다. 사유 필수 */
@@ -171,12 +172,21 @@ public class ImprovementController {
     @PreAuthorize("hasRole('AUDIT_LEAD')")
     public String sendBack(@PathVariable Long id, @RequestParam(required = false) ActionResult target,
                            @RequestParam(required = false) String reason,
+                           @RequestParam(required = false) String from,
                            @AuthenticationPrincipal LoginUser user, RedirectAttributes ra) {
         try {
             service.sendBack(id, target, reason, user);
             ra.addFlashAttribute("message", "이전 단계(" + target.getLabel() + ")로 되돌렸습니다. 담당자가 사유를 확인하고 다시 조치합니다.");
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return afterReview(id, from, user);
+    }
+
+    /** 관리대장 목록에서 처리했으면(from=list) 같은 구분 탭의 목록으로, 아니면 상세로 돌아간다 */
+    private String afterReview(Long id, String from, LoginUser user) {
+        if ("list".equals(from)) {
+            return "redirect:/improvements?kind=" + service.get(id, user).getKind().name();
         }
         return "redirect:/improvements/" + id;
     }

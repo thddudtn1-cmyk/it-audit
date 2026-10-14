@@ -455,3 +455,8 @@ form.inline { display: inline; }
 .review-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .review-actions-grid h4 { margin: 0 0 8px; font-size: 14px; }
 .review-actions-grid .form { border: 1px solid var(--c-border); border-radius: 6px; padding: 12px; margin: 0; }
+
+/* 관리대장 목록의 완료 검토 */
+.col-review { width: 150px; }
+.review-cell .reject-box { margin-top: 6px; }
+.row--review td { background: #fff8e6; }

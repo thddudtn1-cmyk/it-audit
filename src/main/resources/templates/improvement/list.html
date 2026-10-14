@@ -69,14 +69,15 @@
                 <th class="col-period">조치 결과</th>
                 <th class="col-material">조치 현황</th>
                 <th class="col-period">증빙자료</th>
+                <th class="col-review" sec:authorize="hasRole('AUDIT_LEAD')">완료 검토</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="m, s : ${items}" th:classappend="${m.closed} ? 'row--inactive' : (${m.overdue} ? 'row--error' : (${m.dueSoon} ? 'row--highlight' : ''))">
+            <tr th:each="m, s : ${items}" th:classappend="${m.closed} ? 'row--inactive' : (${m.reviewPending} ? 'row--review' : (${m.overdue} ? 'row--error' : (${m.dueSoon} ? 'row--highlight' : '')))">
                 <td class="num"><a th:href="@{/improvements/{id}(id=${m.improvementId})}" th:text="${s.count}">1</a></td>
                 <td><div th:each="x : ${m.items}" class="stack" th:text="${x.auditArea.label}">영역</div></td>
                 <td><div th:each="x : ${m.items}" class="stack" th:text="${x.auditItem}">항목</div></td>
-                <td class="small"><div th:each="x : ${m.items}" class="stack pre" th:text="|#${x.seqNo} ${x.itemDetail}|">상세</div></td>
+                <td class="small cell-wide"><div th:each="x : ${m.items}" class="stack pre" th:text="|#${x.seqNo} ${x.itemDetail}|">상세</div></td>
                 <td th:text="${m.roundShortLabel}">2026 3Q</td>
                 <td th:text="${m.ownerLabel}">팀 / 담당자</td>
                 <th:block th:unless="${rec}">
@@ -97,8 +98,28 @@
                 </td>
                 <td class="pre small" th:text="${m.actionStatus}">현황</td>
                 <td class="num" th:text="${m.evidenceCount > 0} ? |${m.evidenceCount}건| : '-'">-</td>
+                <td class="review-cell" sec:authorize="hasRole('AUDIT_LEAD')">
+                    <th:block th:if="${m.reviewPending}">
+                        <form th:action="@{/improvements/{id}/close(id=${m.improvementId})}" method="post" class="inline">
+                            <input type="hidden" name="from" value="list">
+                            <button type="submit" class="button button--primary button--small"
+                                    title="조치 결과 '완료'를 확인하고 최종확정합니다">검토완료(최종확정)</button>
+                        </form>
+                        <details class="reject-box">
+                            <summary class="small">반려</summary>
+                            <form th:action="@{/improvements/{id}/return(id=${m.improvementId})}" method="post">
+                                <input type="hidden" name="from" value="list">
+                                <label class="checkbox"><input type="radio" name="target" value="IN_PROGRESS" checked> 진행중으로</label>
+                                <label class="checkbox"><input type="radio" name="target" value="PLANNED"> 예정으로</label>
+                                <textarea name="reason" rows="2" maxlength="1000" required placeholder="반려 사유 (담당자에게 보입니다)"></textarea>
+                                <button type="submit" class="button button--danger button--small">반려</button>
+                            </form>
+                        </details>
+                    </th:block>
+                    <a class="small" th:unless="${m.reviewPending}" th:href="@{/improvements/{id}(id=${m.improvementId})}">상세</a>
+                </td>
             </tr>
-            <tr th:if="${#lists.isEmpty(items)}"><td th:colspan="${rec} ? 12 : 13" class="empty">해당하는 건이 없습니다.</td></tr>
+            <tr th:if="${#lists.isEmpty(items)}"><td colspan="14" class="empty">해당하는 건이 없습니다.</td></tr>
             </tbody>
         </table>
     </div>
