@@ -1,7 +1,5 @@
 package com.itaudit.checklist;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,9 +7,7 @@ import jakarta.validation.constraints.Size;
 /** 체크리스트 항목 개별 등록·수정 입력값 */
 public class ChecklistForm {
 
-    @NotNull(message = "순번을 입력하세요.")
-    @Min(value = 1, message = "순번은 1 이상입니다.")
-    @Max(value = 9999, message = "순번은 9999 이하입니다.")
+    /** 화면 표시 전용. 순번은 자동 채번되며 입력값은 쓰지 않는다 */
     private Integer seqNo;
 
     @NotNull(message = "감사 영역을 선택하세요.")

@@ -159,15 +159,19 @@ public class ChecklistService {
 
     // ---------- 개별 등록·수정 ----------
 
+    /**
+     * 항목 추가. 순번은 자동 채번한다: 모든 연도를 통틀어 가장 큰 순번 + 1.
+     * [가정] 순번은 연도와 관계없는 마스터 코드(같은 순번 = 같은 항목, F-03 배정 복사·F-10 이력의 기준)라서
+     *        연도별로 따로 세지 않고 전체 최댓값 다음 번호를 써서 다른 연도 항목과 겹치지 않게 한다.
+     *        엑셀 업로드는 파일의 순번을 그대로 쓴다.
+     */
     @Transactional
     public Long create(int year, ChecklistForm form, LoginUser actor) {
         checkYear(year);
-        if (mapper.findBySeqNo(year, form.getSeqNo()) != null) {
-            throw new BusinessException(year + "년에 순번 " + form.getSeqNo() + "이(가) 이미 있습니다.");
-        }
         ChecklistItem item = new ChecklistItem();
         item.setApplyYear(year);
         apply(item, form);
+        item.setSeqNo(mapper.findMaxSeqNo() + 1);
         stamp(item, actor, LocalDateTime.now(), true);
         mapper.insert(item);
         activityLog.log(ActivityLogService.CHECKLIST_CREATE, "CHECKLIST_ITEM", item.getItemId(),
@@ -178,11 +182,8 @@ public class ChecklistService {
     @Transactional
     public void update(Long itemId, ChecklistForm form, LoginUser actor) {
         ChecklistItem item = getItem(itemId);
-        ChecklistItem dup = mapper.findBySeqNo(item.getApplyYear(), form.getSeqNo());
-        if (dup != null && !dup.getItemId().equals(itemId)) {
-            throw new BusinessException(item.getApplyYear() + "년에 순번 " + form.getSeqNo() + "이(가) 이미 있습니다.");
-        }
         String before = describe(item);
+        // 순번은 자동 채번 값이라 수정하지 않는다
         apply(item, form);
         stamp(item, actor, LocalDateTime.now(), false);
         mapper.update(item);
@@ -225,7 +226,6 @@ public class ChecklistService {
     }
 
     private static void apply(ChecklistItem item, ChecklistForm form) {
-        item.setSeqNo(form.getSeqNo());
         item.setAuditArea(form.getAuditArea());
         item.setAuditItem(form.getAuditItem().trim());
         item.setItemDetail(form.getItemDetail().trim());

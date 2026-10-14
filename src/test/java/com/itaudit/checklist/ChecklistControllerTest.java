@@ -154,45 +154,84 @@ class ChecklistControllerTest {
         assertThat(mapper.countByYear(2027)).isEqualTo(43);
     }
 
-    @Test
-    void 항목을_개별로_추가하고_수정하며_이력이_남는다() throws Exception {
-        mvc.perform(post("/checklist/items").param("year", "2028").with(user(lead)).with(csrf())
-                        .param("seqNo", "1").param("auditArea", "SECURITY").param("auditItem", "접근관리")
+    private Long addItem(int year, String auditItem) throws Exception {
+        mvc.perform(post("/checklist/items").param("year", String.valueOf(year)).with(user(lead)).with(csrf())
+                        .param("auditArea", "SECURITY").param("auditItem", auditItem)
                         .param("itemDetail", "계정 점검").param("auditPeriod", "Q2").param("regulation", "규정 A")
                         .param("active", "true"))
-                .andExpect(redirectedUrl("/checklist?year=2028"));
-        ChecklistItem item = mapper.findBySeqNo(2028, 1);
-        assertThat(item.getAuditPeriod()).isEqualTo(AuditPeriod.Q2);
+                .andExpect(redirectedUrl("/checklist?year=" + year));
+        return mapper.findByYear(year, null, null).stream().filter(i -> i.getAuditItem().equals(auditItem))
+                .findFirst().orElseThrow().getItemId();
+    }
 
-        // 같은 연도 같은 순번은 거부
+    @Test
+    void 항목을_추가하면_순번이_자동으로_채번된다() throws Exception {
+        // 빈 DB 에서는 1부터
+        Long first = addItem(2028, "접근관리");
+        assertThat(mapper.findById(first).getSeqNo()).isEqualTo(1);
+        Long second = addItem(2028, "반출입");
+        assertThat(mapper.findById(second).getSeqNo()).isEqualTo(2);
+
+        // 사용자가 보낸 순번은 무시한다
         mvc.perform(post("/checklist/items").param("year", "2028").with(user(lead)).with(csrf())
-                        .param("seqNo", "1").param("auditArea", "SECURITY").param("auditItem", "x")
+                        .param("seqNo", "1").param("auditArea", "SECURITY").param("auditItem", "임의 순번 시도")
                         .param("itemDetail", "y").param("auditPeriod", "Q1"))
-                .andExpect(content().string(Matchers.containsString("이미 있습니다")));
+                .andExpect(redirectedUrl("/checklist?year=2028"));
+        assertThat(mapper.findByYear(2028, null, null)).extracting(ChecklistItem::getSeqNo).containsExactly(1, 2, 3);
+    }
 
-        // 수정: 사용 해제 (삭제 대신)
-        mvc.perform(post("/checklist/items/" + item.getItemId()).with(user(lead)).with(csrf())
-                        .param("seqNo", "1").param("auditArea", "SECURITY").param("auditItem", "접근관리")
+    @Test
+    void 자동_채번은_모든_연도의_최대_순번_다음이다() throws Exception {
+        uploadAndConfirm(2026);
+        // 다른 연도에 추가해도 2026 의 순번(43)과 겹치지 않는다
+        Long id = addItem(2027, "신규 항목");
+        assertThat(mapper.findById(id).getSeqNo()).isEqualTo(44);
+        // 중간 항목을 지워도 번호를 메우지 않는다 (최댓값 + 1)
+        mvc.perform(post("/checklist/delete").param("year", "2026")
+                .param("itemIds", mapper.findBySeqNo(2026, 5).getItemId().toString()).with(user(lead)).with(csrf()));
+        assertThat(mapper.findById(addItem(2027, "또 다른 항목")).getSeqNo()).isEqualTo(45);
+        assertThat(activityLogMapper.findByAction(ActivityLogService.CHECKLIST_CREATE))
+                .anyMatch(l -> l.getDetail().equals("2027년 #44"));
+    }
+
+    @Test
+    void 추가_화면은_순번_입력칸_없이_자동_부여를_안내하고_수정_화면은_순번을_보여준다() throws Exception {
+        mvc.perform(get("/checklist/items/new").param("year", "2028").with(user(lead)))
+                .andExpect(content().string(Matchers.containsString("자동으로 부여됩니다")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"seqNo\""))));
+        Long id = addItem(2028, "접근관리");
+        mvc.perform(get("/checklist/items/" + id + "/edit").with(user(lead)))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"seqNo\""))))
+                .andExpect(content().string(Matchers.containsString("<strong>1</strong>")));
+    }
+
+    @Test
+    void 항목을_수정해도_순번은_바뀌지_않고_이력이_남는다() throws Exception {
+        Long id = addItem(2028, "접근관리");
+        assertThat(mapper.findById(id).getAuditPeriod()).isEqualTo(AuditPeriod.Q2);
+
+        // 수정: 사용 해제 (삭제 대신). 순번을 바꾸려는 값을 보내도 무시한다
+        mvc.perform(post("/checklist/items/" + id).with(user(lead)).with(csrf())
+                        .param("seqNo", "99").param("auditArea", "SECURITY").param("auditItem", "접근관리")
                         .param("itemDetail", "계정 점검 (개정)").param("auditPeriod", "EVERY").param("regulation", "")
                         // 체크박스 해제 시 브라우저는 th:field 가 만든 숨김 필드(_active)만 보낸다
                         .param("_active", "on"))
                 .andExpect(redirectedUrl("/checklist?year=2028"));
-        ChecklistItem updated = mapper.findById(item.getItemId());
+        ChecklistItem updated = mapper.findById(id);
+        assertThat(updated.getSeqNo()).isEqualTo(1);
         assertThat(updated.getItemDetail()).isEqualTo("계정 점검 (개정)");
         assertThat(updated.getAuditPeriod()).isEqualTo(AuditPeriod.EVERY);
         assertThat(updated.getRegulation()).isNull();
         assertThat(updated.isActive()).isFalse();
         assertThat(activityLogMapper.findByAction(ActivityLogService.CHECKLIST_UPDATE))
-                .anyMatch(l -> String.valueOf(item.getItemId()).equals(l.getTargetId())
-                        && l.getDetail().contains("계정 점검 (개정)"));
+                .anyMatch(l -> String.valueOf(id).equals(l.getTargetId()) && l.getDetail().contains("계정 점검 (개정)"));
     }
 
     @Test
     void 입력값이_비면_오류를_보여준다() throws Exception {
         mvc.perform(post("/checklist/items").param("year", "2028").with(user(lead)).with(csrf())
-                        .param("seqNo", "").param("auditItem", "").param("itemDetail", ""))
+                        .param("auditItem", "").param("itemDetail", ""))
                 .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("순번을 입력하세요")))
                 .andExpect(content().string(Matchers.containsString("감사 영역을 선택하세요")));
         assertThat(mapper.countByYear(2028)).isZero();
     }
@@ -226,7 +265,7 @@ class ChecklistControllerTest {
     @Autowired com.itaudit.round.RoundService roundService;
 
     @Test
-    void 선택한_항목을_삭제하고_내용이_이력에_남으며_순번을_다시_쓸_수_있다() throws Exception {
+    void 선택한_항목을_삭제하고_내용이_이력에_남으며_삭제한_순번은_메우지_않는다() throws Exception {
         uploadAndConfirm(2026);
         Long a = mapper.findBySeqNo(2026, 1).getItemId();
         Long b = mapper.findBySeqNo(2026, 2).getItemId();
@@ -242,12 +281,13 @@ class ChecklistControllerTest {
         assertThat(activityLogMapper.findByAction(ActivityLogService.CHECKLIST_DELETE)).hasSize(2)
                 .anyMatch(l -> l.getDetail().contains("#1 ") && l.getDetail().contains("사고 관리 및 보고"));
 
-        // 지운 순번은 다시 등록할 수 있다
+        // 지운 순번(#1, #2)은 메우지 않고 새 항목은 최댓값 다음(#44)으로 채번한다
         mvc.perform(post("/checklist/items").param("year", "2026").with(user(lead)).with(csrf())
-                        .param("seqNo", "1").param("auditArea", "IT_OPS").param("auditItem", "새 항목")
+                        .param("auditArea", "IT_OPS").param("auditItem", "새 항목")
                         .param("itemDetail", "상세").param("auditPeriod", "Q1").param("active", "true"))
                 .andExpect(redirectedUrl("/checklist?year=2026"));
-        assertThat(mapper.findBySeqNo(2026, 1).getAuditItem()).isEqualTo("새 항목");
+        assertThat(mapper.findBySeqNo(2026, 44).getAuditItem()).isEqualTo("새 항목");
+        assertThat(mapper.findBySeqNo(2026, 1)).isNull();
     }
 
     @Test

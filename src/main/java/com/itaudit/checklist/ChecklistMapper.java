@@ -21,6 +21,9 @@ public interface ChecklistMapper {
 
     int countByYear(@Param("year") int year);
 
+    /** 모든 연도를 통틀어 가장 큰 순번 (없으면 0) — 자동 채번용 */
+    int findMaxSeqNo();
+
     List<String> findAuditItems(@Param("year") int year);
 
     List<String> findRegulations(@Param("year") int year);

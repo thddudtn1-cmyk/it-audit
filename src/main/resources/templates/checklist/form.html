@@ -9,10 +9,11 @@
 
     <form th:object="${form}" method="post" class="form"
           th:action="${itemId == null} ? @{/checklist/items(year=${year})} : @{/checklist/items/{id}(id=${itemId})}">
-        <label>순번
-            <input type="number" th:field="*{seqNo}" min="1" max="9999" required class="input--short">
-            <small class="error" th:if="${#fields.hasErrors('seqNo')}" th:errors="*{seqNo}"></small>
-        </label>
+        <div class="form-row">
+            <span class="form-row__label">순번</span>
+            <strong th:if="${itemId != null}" th:text="${form.seqNo}">23</strong>
+            <span th:if="${itemId == null}" class="muted">저장할 때 자동으로 부여됩니다 (현재 가장 큰 순번 다음 번호)</span>
+        </div>
         <label>감사 영역
             <select th:field="*{auditArea}" required>
                 <option value="">선택</option>

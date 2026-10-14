@@ -33,6 +33,10 @@
         SELECT COUNT(*) FROM checklist_item WHERE apply_year = #{year}
     </select>
 
+    <select id="findMaxSeqNo" resultType="int">
+        SELECT COALESCE(MAX(seq_no), 0) FROM checklist_item
+    </select>
+
     <select id="findAuditItems" resultType="string">
         SELECT DISTINCT audit_item FROM checklist_item WHERE apply_year = #{year} ORDER BY audit_item
     </select>
