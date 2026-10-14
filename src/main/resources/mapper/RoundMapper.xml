@@ -5,6 +5,7 @@
     <sql id="roundWithCounts">
         SELECT r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at,
                r.submitted_by, r.submitted_at,
+               (SELECT COUNT(*) FROM improvement m WHERE m.round_id = r.round_id) AS improvement_count,
                COUNT(i.round_item_id) AS total_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'Y' THEN 1 ELSE 0 END), 0) AS excluded_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'Y' THEN 1 ELSE 0 END), 0) AS no_reply_count,

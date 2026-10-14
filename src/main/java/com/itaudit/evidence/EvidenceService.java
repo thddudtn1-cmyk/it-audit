@@ -135,6 +135,24 @@ public class EvidenceService {
         return ev;
     }
 
+    /**
+     * 저장된 파일 물리 삭제 (회차 삭제처럼 대상 자체가 사라질 때만 쓴다). 실패한 파일은 로그만 남기고 계속한다.
+     * 경로가 data 디렉터리 밖이면 건너뛴다.
+     */
+    public int deleteStoredFiles(List<String> storedPaths) {
+        int deleted = 0;
+        for (String relative : storedPaths) {
+            try {
+                if (Files.deleteIfExists(resolve(relative))) {
+                    deleted++;
+                }
+            } catch (IOException | BusinessException e) {
+                org.slf4j.LoggerFactory.getLogger(EvidenceService.class).warn("증적 파일 삭제 실패: {}", relative);
+            }
+        }
+        return deleted;
+    }
+
     private EvidenceAccess access(EvidenceOwnerType type) {
         EvidenceAccess rule = accessRules.get(type);
         if (rule == null) {

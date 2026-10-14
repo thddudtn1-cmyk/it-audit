@@ -8,18 +8,31 @@
     <div th:replace="~{fragments/layout :: flash}"></div>
     <div class="toolbar">
         <span th:text="|회차 ${#lists.size(rounds)}개|">회차 0개</span>
-        <a sec:authorize="hasRole('AUDIT_LEAD')" class="button button--primary" th:href="@{/rounds/new}">회차 생성</a>
+        <span class="toolbar__actions" sec:authorize="hasRole('AUDIT_LEAD')">
+            <button type="submit" form="delete-form" class="button button--danger" id="delete-button" disabled
+                    th:if="${!#lists.isEmpty(rounds)}">선택 삭제</button>
+            <a class="button button--primary" th:href="@{/rounds/new}">회차 생성</a>
+        </span>
     </div>
+    <form id="delete-form" th:action="@{/rounds/delete}" method="post"
+          data-confirm="선택한 회차와 그 안의 점검 입력·증적 파일·사전요청자료·코멘트가 모두 삭제되며 되돌릴 수 없습니다. 계속할까요?">
     <div class="table-wrap">
         <table class="table">
             <thead>
             <tr>
+                <th class="col-check" sec:authorize="hasRole('AUDIT_LEAD')"><input type="checkbox" id="check-all" title="삭제할 수 있는 회차 전체 선택" aria-label="전체 선택"></th>
                 <th>회차</th><th class="num">대상 항목</th><th class="num">제외</th><th class="num">배정</th>
                 <th>제출률</th><th>상태</th><th>생성일</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="r : ${rounds}">
+                <td class="col-check" sec:authorize="hasRole('AUDIT_LEAD')">
+                    <input type="checkbox" name="roundIds" th:value="${r.roundId}" class="row-check"
+                           th:disabled="${r.improvementCount > 0}"
+                           th:title="${r.improvementCount > 0} ? |개선사항·권고사항 ${r.improvementCount}건이 연결되어 삭제할 수 없습니다| : '삭제 선택'"
+                           th:attr="aria-label=|${r.label} 선택|">
+                </td>
                 <td><a th:href="@{/rounds/{id}(id=${r.roundId})}" th:text="${r.label}">2026년 3분기</a></td>
                 <td class="num" th:text="${r.targetCount}">14</td>
                 <td class="num" th:text="${r.excludedCount}">1</td>
@@ -32,7 +45,7 @@
                 <td th:text="${#temporals.format(r.createdAt, 'yyyy-MM-dd')}">2026-07-01</td>
             </tr>
             <tr th:if="${#lists.isEmpty(rounds)}">
-                <td colspan="7" class="empty">
+                <td colspan="8" class="empty">
                     <span sec:authorize="hasRole('AUDIT_DEPT')">감사부서에 제출된 회차가 없습니다.</span>
                     <span sec:authorize="!hasRole('AUDIT_DEPT')">아직 만든 회차가 없습니다.</span>
                 </td>
@@ -40,6 +53,8 @@
             </tbody>
         </table>
     </div>
+    </form>
 </main>
+<script th:src="@{/js/checklist.js}"></script>
 </body>
 </html>

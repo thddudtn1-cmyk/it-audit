@@ -30,6 +30,7 @@ public class ActivityLogService {
     public static final String CHECKLIST_UPDATE = "CHECKLIST_UPDATE";
     public static final String CHECKLIST_DELETE = "CHECKLIST_DELETE";
     public static final String ROUND_CREATE = "ROUND_CREATE";
+    public static final String ROUND_DELETE = "ROUND_DELETE";
     public static final String ROUND_ITEM_ASSIGN = "ROUND_ITEM_ASSIGN";
     public static final String ROUND_STATUS = "ROUND_STATUS";
     public static final String ROUND_SUBMIT = "ROUND_SUBMIT";

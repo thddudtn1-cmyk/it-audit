@@ -26,6 +26,7 @@ public final class ActionLabels {
         put(ActivityLogService.CHECKLIST_UPDATE, "체크리스트 항목 수정");
         put(ActivityLogService.CHECKLIST_DELETE, "체크리스트 항목 삭제");
         put(ActivityLogService.ROUND_CREATE, "회차 생성");
+        put(ActivityLogService.ROUND_DELETE, "회차 삭제");
         put(ActivityLogService.ROUND_ITEM_ASSIGN, "담당 배정");
         put(ActivityLogService.ROUND_STATUS, "회차 상태 변경");
         put(ActivityLogService.INSPECTION_SAVE, "점검 임시저장");

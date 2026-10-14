@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.round.RoundPurgeMapper">
+
+    <sql id="itemIds">
+        SELECT round_item_id FROM round_item WHERE round_id = #{roundId}
+    </sql>
+
+    <sql id="requestIds">
+        SELECT q.request_id FROM audit_request q JOIN round_item i ON i.round_item_id = q.round_item_id
+         WHERE i.round_id = #{roundId}
+    </sql>
+
+    <sql id="evidenceOwned">
+        (owner_type = 'ROUND_ITEM' AND owner_id IN (<include refid="itemIds"/>))
+        OR (owner_type = 'AUDIT_REQUEST' AND owner_id IN (<include refid="requestIds"/>))
+    </sql>
+
+    <select id="countImprovementLinks" resultType="int">
+        SELECT (SELECT COUNT(*) FROM improvement WHERE round_id = #{roundId})
+             + (SELECT COUNT(*) FROM improvement_item WHERE round_item_id IN (<include refid="itemIds"/>))
+    </select>
+
+    <select id="findEvidencePaths" resultType="string">
+        SELECT stored_path FROM evidence WHERE <include refid="evidenceOwned"/>
+    </select>
+
+    <delete id="deleteComments">
+        DELETE FROM comment_note WHERE target_type = 'ROUND_ITEM' AND target_id IN (<include refid="itemIds"/>)
+    </delete>
+
+    <delete id="deleteEvidence">
+        DELETE FROM evidence WHERE <include refid="evidenceOwned"/>
+    </delete>
+
+    <delete id="deleteRequests">
+        DELETE FROM audit_request WHERE round_item_id IN (<include refid="itemIds"/>)
+    </delete>
+
+    <delete id="deleteItems">
+        DELETE FROM round_item WHERE round_id = #{roundId}
+    </delete>
+
+    <delete id="deleteRound">
+        DELETE FROM audit_round WHERE round_id = #{roundId}
+    </delete>
+</mapper>

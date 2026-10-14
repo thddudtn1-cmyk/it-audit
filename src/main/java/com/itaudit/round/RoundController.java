@@ -25,16 +25,33 @@ public class RoundController {
 
     private final RoundService service;
     private final ReviewService reviewService;
+    private final RoundDeleteService deleteService;
 
-    public RoundController(RoundService service, ReviewService reviewService) {
+    public RoundController(RoundService service, ReviewService reviewService, RoundDeleteService deleteService) {
         this.service = service;
         this.reviewService = reviewService;
+        this.deleteService = deleteService;
     }
 
     @GetMapping
     public String list(@AuthenticationPrincipal LoginUser user, Model model) {
         model.addAttribute("rounds", service.findRounds(user));
         return "round/list";
+    }
+
+    // ---------- 회차 삭제 (주관자) ----------
+
+    @PostMapping("/delete")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String delete(@RequestParam(name = "roundIds", required = false) List<Long> roundIds,
+                         @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        try {
+            int count = deleteService.delete(roundIds, actor);
+            ra.addFlashAttribute("message", "회차 " + count + "건과 그 안의 점검 입력·증적·사전요청자료를 삭제했습니다.");
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/rounds";
     }
 
     // ---------- 회차 생성 (주관자) ----------

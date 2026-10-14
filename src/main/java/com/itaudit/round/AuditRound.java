@@ -24,6 +24,8 @@ public class AuditRound {
     private int assignedCount;
     private int submittedCount;
     private int confirmedCount;
+    /** 이 회차에서 발생한 개선사항·권고사항 수 (0보다 크면 삭제할 수 없다) */
+    private int improvementCount;
 
     public String getLabel() {
         return roundYear + "년 " + quarter + "분기";
@@ -87,6 +89,8 @@ public class AuditRound {
     public void setSubmittedBy(Long submittedBy) { this.submittedBy = submittedBy; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public int getImprovementCount() { return improvementCount; }
+    public void setImprovementCount(int improvementCount) { this.improvementCount = improvementCount; }
     public int getConfirmedCount() { return confirmedCount; }
     public void setConfirmedCount(int confirmedCount) { this.confirmedCount = confirmedCount; }
     public int getTotalCount() { return totalCount; }
