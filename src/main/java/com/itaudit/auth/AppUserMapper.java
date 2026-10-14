@@ -17,6 +17,9 @@ public interface AppUserMapper {
 
     int countByRole(@Param("role") Role role);
 
+    /** 사용 중인 해당 역할 사용자 (담당팀·이름 순) */
+    List<AppUser> findActiveByRole(@Param("role") Role role);
+
     void insert(AppUser user);
 
     /** 이름·담당팀·역할·사용여부 수정 */

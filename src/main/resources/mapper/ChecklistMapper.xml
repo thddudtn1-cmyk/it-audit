@@ -63,6 +63,13 @@
          WHERE item_id = #{itemId}
     </update>
 
+    <select id="countUsedInRounds" resultType="int">
+        SELECT COUNT(*)
+          FROM round_item r
+          JOIN checklist_item c ON c.item_id = r.checklist_item_id
+         WHERE c.apply_year = #{year}
+    </select>
+
     <delete id="deleteByYear">
         DELETE FROM checklist_item WHERE apply_year = #{year}
     </delete>

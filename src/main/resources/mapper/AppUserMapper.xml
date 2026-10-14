@@ -28,6 +28,14 @@
          ORDER BY u.use_yn DESC, u.role_code, u.login_id
     </select>
 
+    <select id="findActiveByRole" resultType="com.itaudit.auth.AppUser">
+        SELECT <include refid="columns"/>
+          FROM app_user u
+          LEFT JOIN team t ON t.team_code = u.team_code
+         WHERE u.role_code = #{role} AND u.use_yn = 'Y'
+         ORDER BY t.sort_order, t.team_name, u.user_name
+    </select>
+
     <select id="countByRole" resultType="int">
         SELECT COUNT(*) FROM app_user WHERE role_code = #{role}
     </select>

@@ -39,6 +39,15 @@ public class TestUsers {
         teamMapper.insert(team);
     }
 
+    /** 담당팀 소속 점검 담당자 */
+    public LoginUser inspector(String loginId, String teamCode) {
+        LoginUser u = user(loginId, Role.INSPECTOR);
+        AppUser au = userMapper.findById(u.getUserId());
+        au.setTeamCode(teamCode);
+        userMapper.update(au);
+        return new LoginUser(userMapper.findById(u.getUserId()));
+    }
+
     public LoginUser user(String loginId, Role role) {
         return user(loginId, role, false, true);
     }

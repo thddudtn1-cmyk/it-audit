@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.round.RoundMapper">
+
+    <sql id="roundWithCounts">
+        SELECT r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at,
+               COUNT(i.round_item_id) AS total_count,
+               COALESCE(SUM(CASE WHEN i.excluded_yn = 'Y' THEN 1 ELSE 0 END), 0) AS excluded_count,
+               COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'Y' THEN 1 ELSE 0 END), 0) AS no_reply_count,
+               COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.assignee_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS assigned_count,
+               COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'N'
+                                  AND i.submit_status IN ('SUBMITTED', 'CONFIRMED') THEN 1 ELSE 0 END), 0) AS submitted_count
+          FROM audit_round r
+          LEFT JOIN round_item i ON i.round_id = r.round_id
+    </sql>
+
+    <sql id="roundGroupBy">
+         GROUP BY r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at
+    </sql>
+
+    <select id="findRounds" resultType="com.itaudit.round.AuditRound">
+        <include refid="roundWithCounts"/>
+        <if test="statuses != null">
+         WHERE r.status IN <foreach collection="statuses" item="s" open="(" separator="," close=")">#{s}</foreach>
+        </if>
+        <include refid="roundGroupBy"/>
+         ORDER BY r.round_year DESC, r.quarter DESC
+    </select>
+
+    <select id="findRound" resultType="com.itaudit.round.AuditRound">
+        <include refid="roundWithCounts"/>
+         WHERE r.round_id = #{roundId}
+        <include refid="roundGroupBy"/>
+    </select>
+
+    <select id="findRoundByQuarter" resultType="com.itaudit.round.AuditRound">
+        SELECT round_id, round_year, quarter, status, created_by, created_at, updated_by, updated_at
+          FROM audit_round
+         WHERE round_year = #{year} AND quarter = #{quarter}
+    </select>
+
+    <insert id="insertRound" useGeneratedKeys="true" keyProperty="roundId" keyColumn="round_id">
+        INSERT INTO audit_round (round_year, quarter, status, created_by, created_at, updated_by, updated_at)
+        VALUES (#{roundYear}, #{quarter}, #{status}, #{createdBy}, #{createdAt}, #{updatedBy}, #{updatedAt})
+    </insert>
+
+    <sql id="itemColumns">
+        i.round_item_id, i.round_id, i.checklist_item_id, i.team_code, i.assignee_id, i.request_material,
+        i.sample_size, i.no_reply_yn, i.excluded_yn, i.exclude_reason, i.submit_status,
+        i.created_at, i.updated_by, i.updated_at,
+        c.seq_no, c.audit_area, c.audit_item, c.item_detail, c.audit_period, c.regulation,
+        t.team_name, u.user_name AS assignee_name
+    </sql>
+
+    <sql id="itemJoins">
+          FROM round_item i
+          JOIN checklist_item c ON c.item_id = i.checklist_item_id
+          LEFT JOIN team t ON t.team_code = i.team_code
+          LEFT JOIN app_user u ON u.user_id = i.assignee_id
+    </sql>
+
+    <select id="findItems" resultType="com.itaudit.round.RoundItem">
+        SELECT <include refid="itemColumns"/>
+        <include refid="itemJoins"/>
+         WHERE i.round_id = #{roundId}
+         ORDER BY c.seq_no
+    </select>
+
+    <select id="findItem" resultType="com.itaudit.round.RoundItem">
+        SELECT <include refid="itemColumns"/>
+        <include refid="itemJoins"/>
+         WHERE i.round_item_id = #{roundItemId}
+    </select>
+
+    <select id="findItemsBefore" resultType="com.itaudit.round.RoundItem">
+        SELECT <include refid="itemColumns"/>, r.round_year, r.quarter
+        <include refid="itemJoins"/>
+          JOIN audit_round r ON r.round_id = i.round_id
+         WHERE r.round_year &lt; #{year} OR (r.round_year = #{year} AND r.quarter &lt; #{quarter})
+         ORDER BY r.round_year DESC, r.quarter DESC, c.seq_no
+    </select>
+
+    <insert id="insertItem" useGeneratedKeys="true" keyProperty="roundItemId" keyColumn="round_item_id">
+        INSERT INTO round_item (round_id, checklist_item_id, team_code, assignee_id, request_material, sample_size,
+                                no_reply_yn, excluded_yn, exclude_reason, submit_status, created_at, updated_by, updated_at)
+        VALUES (#{roundId}, #{checklistItemId}, #{teamCode}, #{assigneeId}, #{requestMaterial}, #{sampleSize},
+                #{noReplyYn}, #{excludedYn}, #{excludeReason}, #{submitStatus}, #{createdAt}, #{updatedBy}, #{updatedAt})
+    </insert>
+
+    <update id="updateAssignment">
+        UPDATE round_item
+           SET team_code = #{teamCode},
+               assignee_id = #{assigneeId},
+               request_material = #{requestMaterial},
+               sample_size = #{sampleSize},
+               no_reply_yn = #{noReplyYn},
+               excluded_yn = #{excludedYn},
+               exclude_reason = #{excludeReason},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE round_item_id = #{roundItemId}
+    </update>
+</mapper>

@@ -40,6 +40,10 @@ public class ChecklistService {
         return mapper.countByYear(year);
     }
 
+    public boolean isUsedInRounds(int year) {
+        return mapper.countUsedInRounds(year) > 0;
+    }
+
     public List<ChecklistItem> findItems(int year, AuditArea area, AuditPeriod period) {
         return mapper.findByYear(year, area, period);
     }
@@ -93,7 +97,7 @@ public class ChecklistService {
 
     /**
      * 업로드 미리보기를 저장한다. 같은 연도에 항목이 있으면 모두 대체한다.
-     * TODO(F-03): 해당 연도 항목을 쓰는 분기 회차가 있으면 대체를 막는다.
+     * 해당 연도 항목으로 분기 회차를 이미 만들었으면 대체할 수 없다 (회차 이력 보존).
      */
     @Transactional
     public int saveUpload(ChecklistUploadPreview preview, LoginUser actor) {
@@ -102,6 +106,9 @@ public class ChecklistService {
             throw new BusinessException("오류가 있는 행이 있어 저장할 수 없습니다.");
         }
         int year = preview.getApplyYear();
+        if (isUsedInRounds(year)) {
+            throw new BusinessException(year + "년 체크리스트로 만든 분기 회차가 있어 엑셀로 대체할 수 없습니다. 항목을 개별 수정하세요.");
+        }
         int replaced = mapper.deleteByYear(year);
         LocalDateTime now = LocalDateTime.now();
         for (ChecklistUploadRow row : preview.getRows()) {

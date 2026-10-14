@@ -29,6 +29,8 @@ mybatis:
   type-aliases-package: com.itaudit
   configuration:
     map-underscore-to-camel-case: true
+    # 1차 캐시를 문장 단위로: 같은 트랜잭션 안에서 갱신 후 다시 읽을 때 오래된 값을 받지 않도록
+    local-cache-scope: statement
     jdbc-type-for-null: NULL
 
 app:

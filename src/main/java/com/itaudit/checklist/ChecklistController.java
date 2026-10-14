@@ -97,6 +97,7 @@ public class ChecklistController {
             return "checklist/upload";
         }
         preview.setExistingCount(service.countByYear(year));
+        preview.setUsedInRounds(service.isUsedInRounds(year));
         session.setAttribute(SESSION_UPLOAD, preview);
         model.addAttribute("preview", preview);
         return "checklist/upload-preview";

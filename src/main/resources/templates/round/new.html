@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('분기 회차 생성')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2>분기 회차 생성</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form method="get" th:action="@{/rounds/new}" class="filter-bar">
+        <label>연도
+            <input type="number" name="year" th:value="${year}" min="2000" max="2100" class="input--short" required>
+        </label>
+        <label>분기
+            <select name="quarter">
+                <option th:each="q : ${#numbers.sequence(1, 4)}" th:value="${q}" th:text="|${q}분기|" th:selected="${q == quarter}">1분기</option>
+            </select>
+        </label>
+        <button type="submit" class="button">대상 항목 추출</button>
+    </form>
+
+    <div class="alert alert--warn" th:if="${existing}">
+        <span th:text="|${existing.label} 회차가 이미 있습니다.|"></span>
+        <a th:href="@{/rounds/{id}(id=${existing.roundId})}">점검 총괄표로 이동</a>
+    </div>
+
+    <form th:if="${candidates != null and !#lists.isEmpty(candidates)}" th:action="@{/rounds}" method="post">
+        <input type="hidden" name="year" th:value="${year}">
+        <input type="hidden" name="quarter" th:value="${quarter}">
+
+        <div class="summary">
+            <span><strong>추출</strong> <span th:text="|${#lists.size(candidates)}건|">15건</span></span>
+            <span class="muted" th:text="|감사 시기가 ${quarter}분기 또는 매분기인 ${year}년 체크리스트 항목 (사용 중인 항목만)|"></span>
+            <label class="checkbox">
+                <input type="checkbox" name="copyPrevious" value="true" checked>
+                <input type="hidden" name="_copyPrevious" value="on">
+                지난 회차 배정 복사 (담당팀·담당자·사전요청자료·표본 수·회신불필요)
+                <span class="muted" th:text="|— ${previousCount}건 해당|"></span>
+            </label>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table table--checklist">
+                <thead>
+                <tr>
+                    <th class="col-no">순번</th>
+                    <th class="col-area">감사 영역</th>
+                    <th class="col-item">평가항목</th>
+                    <th>점검방식</th>
+                    <th class="col-period">점검시기</th>
+                    <th class="col-reg">지난 회차 배정</th>
+                    <th class="col-exclude">제외 / 제외 사유</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c, s : ${candidates}" th:with="i=${c.item()}, p=${c.previous()}"
+                    th:classappend="${p != null and p.excluded} ? 'row--inactive'">
+                    <td class="num" th:text="${i.seqNo}">1</td>
+                    <td th:text="${i.auditArea.label}">영역</td>
+                    <td th:text="${i.auditItem}">항목</td>
+                    <td class="pre" th:text="${i.itemDetail}">상세</td>
+                    <td><span class="tag" th:classappend="${i.auditPeriod.name() == 'EVERY'} ? 'tag--strong'" th:text="${i.auditPeriod.label}">3분기</span></td>
+                    <td class="small">
+                        <th:block th:if="${p != null}">
+                            <div class="muted" th:text="${p.roundLabel}">2025년 3분기</div>
+                            <div th:text="|${p.teamName ?: '-'} / ${p.assigneeName ?: '-'}|">팀 / 담당자</div>
+                            <div class="pre" th:if="${p.requestMaterial}" th:text="${p.requestMaterial}">자료</div>
+                        </th:block>
+                        <span th:if="${p == null}" class="muted">없음</span>
+                    </td>
+                    <td>
+                        <input type="hidden" th:name="|rows[${s.index}].checklistItemId|" th:value="${i.itemId}">
+                        <label class="checkbox">
+                            <input type="checkbox" th:name="|rows[${s.index}].excluded|" value="true"
+                                   th:checked="${p != null and p.excluded}" data-exclude-toggle> 제외
+                        </label>
+                        <input type="text" th:name="|rows[${s.index}].excludeReason|" class="input--block"
+                               th:value="${p != null and p.excluded} ? ${p.excludeReason} : ''"
+                               placeholder="제외 사유 (예: 그룹 IT감사로 대체)" maxlength="500">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="form__actions">
+            <a class="button" th:href="@{/rounds}">취소</a>
+            <button type="submit" class="button button--primary" th:text="|${year}년 ${quarter}분기 회차 생성|">생성</button>
+        </div>
+    </form>
+</main>
+<script th:src="@{/js/round.js}"></script>
+</body>
+</html>

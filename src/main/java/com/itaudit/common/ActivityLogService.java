@@ -28,6 +28,8 @@ public class ActivityLogService {
     public static final String CHECKLIST_COPY = "CHECKLIST_COPY";
     public static final String CHECKLIST_CREATE = "CHECKLIST_CREATE";
     public static final String CHECKLIST_UPDATE = "CHECKLIST_UPDATE";
+    public static final String ROUND_CREATE = "ROUND_CREATE";
+    public static final String ROUND_ITEM_ASSIGN = "ROUND_ITEM_ASSIGN";
 
     private final ActivityLogMapper mapper;
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(|${round.label} 점검 총괄표|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <div class="page-title">
+        <h2 th:text="|${round.label} IT자체감사 총괄표|">총괄표</h2>
+        <span class="tag" th:classappend="|status--${round.status.name().toLowerCase()}|" th:text="${round.status.label}">작성중</span>
+    </div>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <div class="summary">
+        <span><strong>점검 대상</strong> <span th:text="|${round.targetCount}건|">14건</span></span>
+        <span><strong>제외</strong> <span th:text="|${round.excludedCount}건|">1건</span></span>
+        <span><strong>배정</strong> <span th:text="|${round.assignedCount} / ${round.targetCount}|">0/14</span></span>
+        <span><strong>회신불필요</strong> <span th:text="|${round.noReplyCount}건|">0건</span></span>
+        <span><strong>제출률</strong> <span th:text="|${round.submitRate}% (${round.submittedCount}/${round.submitTargetCount})|">0%</span></span>
+        <span class="toolbar__actions" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable}">
+            <a class="button button--primary" th:href="@{/rounds/{id}/assign(id=${round.roundId})}">배정 편집</a>
+        </span>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table table--checklist">
+            <thead>
+            <tr>
+                <th class="col-no">No</th>
+                <th class="col-area">감사 영역</th>
+                <th class="col-item">평가항목</th>
+                <th class="col-reg">법규/규정</th>
+                <th>점검방식</th>
+                <th class="col-period">점검시기</th>
+                <th class="col-team">담당팀</th>
+                <th class="col-team">담당자</th>
+                <th class="col-material">사전요청자료</th>
+                <th class="col-period">제출 상태</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="i, s : ${items}" th:classappend="${i.noReply} ? 'row--no-reply'">
+                <td class="num" th:text="${s.count}" th:title="|체크리스트 순번 ${i.seqNo}|">1</td>
+                <td th:text="${i.auditArea.label}">영역</td>
+                <td th:text="${i.auditItem}">항목</td>
+                <td class="pre small" th:text="${i.regulation}">규정</td>
+                <td class="pre" th:text="${i.itemDetail}">상세</td>
+                <td><span class="tag" th:classappend="${i.auditPeriod.name() == 'EVERY'} ? 'tag--strong'" th:text="${i.auditPeriod.label}">3분기</span></td>
+                <td th:text="${i.teamName} ?: '-'">팀</td>
+                <td th:text="${i.assigneeName} ?: '미배정'" th:classappend="${i.assigneeName == null} ? 'muted'">담당자</td>
+                <td class="pre small">
+                    <span th:text="${i.requestMaterial}">자료</span>
+                    <span class="tag" th:if="${i.sampleSize != null}" th:text="|표본 ${i.sampleSize}개|">표본</span>
+                </td>
+                <td>
+                    <span th:if="${i.noReply}" class="tag">회신불필요</span>
+                    <span th:unless="${i.noReply}" class="tag" th:classappend="|submit--${i.submitStatus.name().toLowerCase()}|"
+                          th:text="${i.submitStatus.label}">미제출</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="small muted">음영 행: 회신불필요 · No는 회차 안 순서이며, 마우스를 올리면 체크리스트 순번을 볼 수 있습니다.</p>
+
+    <section class="panel" th:if="${!#lists.isEmpty(excludedItems)}">
+        <h3 th:text="|제외 항목 ${#lists.size(excludedItems)}건|">제외 항목</h3>
+        <table class="table">
+            <thead><tr><th class="col-no">순번</th><th class="col-item">평가항목</th><th>점검방식</th><th class="col-reg">제외 사유</th></tr></thead>
+            <tbody>
+            <tr th:each="i : ${excludedItems}">
+                <td class="num" th:text="${i.seqNo}">25</td>
+                <td th:text="${i.auditItem}">항목</td>
+                <td class="pre" th:text="${i.itemDetail}">상세</td>
+                <td th:text="${i.excludeReason}">사유</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <div class="form__actions">
+        <a class="button" th:href="@{/rounds}">목록</a>
+    </div>
+</main>
+</body>
+</html>

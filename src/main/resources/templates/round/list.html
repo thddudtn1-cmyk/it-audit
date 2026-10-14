@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('분기 회차 목록')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <h2>분기 회차 목록</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="toolbar">
+        <span th:text="|회차 ${#lists.size(rounds)}개|">회차 0개</span>
+        <a sec:authorize="hasRole('AUDIT_LEAD')" class="button button--primary" th:href="@{/rounds/new}">회차 생성</a>
+    </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>회차</th><th class="num">대상 항목</th><th class="num">제외</th><th class="num">배정</th>
+                <th>제출률</th><th>상태</th><th>생성일</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${rounds}">
+                <td><a th:href="@{/rounds/{id}(id=${r.roundId})}" th:text="${r.label}">2026년 3분기</a></td>
+                <td class="num" th:text="${r.targetCount}">14</td>
+                <td class="num" th:text="${r.excludedCount}">1</td>
+                <td class="num" th:text="|${r.assignedCount} / ${r.targetCount}|">0 / 14</td>
+                <td>
+                    <div class="progress"><div class="progress__bar" th:style="|width: ${r.submitRate}%|"></div></div>
+                    <span class="small" th:text="|${r.submitRate}% (${r.submittedCount}/${r.submitTargetCount})|">0%</span>
+                </td>
+                <td><span class="tag" th:classappend="|status--${r.status.name().toLowerCase()}|" th:text="${r.status.label}">작성중</span></td>
+                <td th:text="${#temporals.format(r.createdAt, 'yyyy-MM-dd')}">2026-07-01</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(rounds)}">
+                <td colspan="7" class="empty">
+                    <span sec:authorize="hasRole('AUDIT_DEPT')">감사부서에 제출된 회차가 없습니다.</span>
+                    <span sec:authorize="!hasRole('AUDIT_DEPT')">아직 만든 회차가 없습니다.</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

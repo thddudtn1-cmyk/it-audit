@@ -2,6 +2,7 @@ package com.itaudit.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -12,6 +13,8 @@ import com.itaudit.auth.Menu;
 
 @Configuration
 @EnableWebSecurity
+// 화면 안의 세부 동작(예: 회차 생성은 주관자만)은 컨트롤러 메서드에 @PreAuthorize 로 제한
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean

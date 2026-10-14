@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|${round.label} 배정 편집|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2 th:text="|${round.label} 담당 배정|">배정</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <p class="small muted">담당자를 고르면 담당팀이 자동으로 채워집니다. 담당팀을 먼저 고르면 그 팀 담당자만 보입니다. 제외할 때는 사유가 필요합니다.</p>
+    <div class="alert alert--warn" th:if="${#lists.isEmpty(inspectors)}">
+        등록된 점검 담당자가 없습니다. 관리 화면에서 '점검 담당자' 역할 사용자를 먼저 등록하세요.
+    </div>
+
+    <form th:action="@{/rounds/{id}/assign(id=${round.roundId})}" method="post">
+        <div class="table-wrap">
+            <table class="table table--checklist table--assign">
+                <thead>
+                <tr>
+                    <th class="col-no">순번</th>
+                    <th class="col-item">평가항목</th>
+                    <th>점검방식</th>
+                    <th class="col-team">담당팀</th>
+                    <th class="col-team">담당자</th>
+                    <th class="col-material">사전요청자료</th>
+                    <th class="col-sample">표본 수</th>
+                    <th class="col-flag">회신<br>불필요</th>
+                    <th class="col-exclude">제외 / 제외 사유</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row, s : ${form.rows}" th:with="i=${items[s.index]}" data-assign-row
+                    th:classappend="${row.excluded} ? 'row--inactive'">
+                    <td class="num" th:text="${i.seqNo}">1</td>
+                    <td th:text="${i.auditItem}">항목</td>
+                    <td class="pre small" th:text="${i.itemDetail}">상세</td>
+                    <td>
+                        <input type="hidden" th:name="|rows[${s.index}].roundItemId|" th:value="${row.roundItemId}">
+                        <select th:name="|rows[${s.index}].teamCode|" data-team>
+                            <option value="">-</option>
+                            <option th:each="t : ${teams}" th:value="${t.teamCode}" th:text="${t.teamName}"
+                                    th:selected="${t.teamCode == row.teamCode}">팀</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select th:name="|rows[${s.index}].assigneeId|" data-assignee>
+                            <option value="">미배정</option>
+                            <option th:each="u : ${inspectors}" th:value="${u.userId}" th:attr="data-team=${u.teamCode}"
+                                    th:text="|${u.userName} (${u.teamName})|" th:selected="${u.userId == row.assigneeId}">담당자</option>
+                        </select>
+                    </td>
+                    <td><textarea th:name="|rows[${s.index}].requestMaterial|" rows="2" maxlength="1000" th:text="${row.requestMaterial}"></textarea></td>
+                    <td><input type="number" th:name="|rows[${s.index}].sampleSize|" th:value="${row.sampleSize}" min="0" class="input--short"></td>
+                    <td class="center">
+                        <input type="checkbox" th:name="|rows[${s.index}].noReply|" value="true" th:checked="${row.noReply}">
+                    </td>
+                    <td>
+                        <label class="checkbox">
+                            <input type="checkbox" th:name="|rows[${s.index}].excluded|" value="true" th:checked="${row.excluded}" data-exclude-toggle> 제외
+                        </label>
+                        <input type="text" th:name="|rows[${s.index}].excludeReason|" th:value="${row.excludeReason}"
+                               class="input--block" maxlength="500" placeholder="제외 사유">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="form__actions">
+            <a class="button" th:href="@{/rounds/{id}(id=${round.roundId})}">취소</a>
+            <button type="submit" class="button button--primary">저장</button>
+        </div>
+    </form>
+</main>
+<script th:src="@{/js/round.js}"></script>
+</body>
+</html>

@@ -19,9 +19,16 @@ public class ChecklistUploadPreview implements Serializable {
     private final List<ChecklistUploadRow> rows = new ArrayList<>();
     /** 같은 연도에 이미 있는 항목 수 (확정 시 대체됨) */
     private int existingCount;
+    /** 같은 연도 항목으로 만든 분기 회차가 있으면 대체 불가 */
+    private boolean usedInRounds;
 
     public boolean isValid() {
         return fileErrors.isEmpty() && !rows.isEmpty() && rows.stream().noneMatch(ChecklistUploadRow::hasError);
+    }
+
+    /** 확정 가능 여부 = 오류 없음 + 회차에서 쓰지 않는 연도 */
+    public boolean isSavable() {
+        return isValid() && !usedInRounds;
     }
 
     public long getErrorRowCount() {
@@ -51,4 +58,6 @@ public class ChecklistUploadPreview implements Serializable {
     public List<ChecklistUploadRow> getRows() { return rows; }
     public int getExistingCount() { return existingCount; }
     public void setExistingCount(int existingCount) { this.existingCount = existingCount; }
+    public boolean isUsedInRounds() { return usedInRounds; }
+    public void setUsedInRounds(boolean usedInRounds) { this.usedInRounds = usedInRounds; }
 }

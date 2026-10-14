@@ -168,3 +168,31 @@ form.inline { display: inline; }
 .role-card span { font-size: 12px; color: var(--c-muted); }
 .role-card:hover, .role-card:focus { border-color: var(--c-primary); background: var(--c-info-bg); outline: none; }
 .id-login summary { cursor: pointer; color: var(--c-muted); margin-bottom: 10px; }
+
+/* 분기 회차 */
+.page-title { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.page-title h2 { margin: 0; }
+.summary .checkbox { display: flex; gap: 6px; align-items: center; }
+.summary .toolbar__actions { margin-left: auto; }
+.center { text-align: center; }
+.input--block { display: block; width: 100%; margin-top: 4px; padding: 5px 7px; border: 1px solid var(--c-border); border-radius: 4px; font: inherit; }
+.table--assign select, .table--assign textarea, .table--assign input[type=number] {
+    width: 100%; padding: 5px 7px; border: 1px solid var(--c-border); border-radius: 4px; font: inherit;
+}
+.table--assign textarea { resize: vertical; }
+.col-team { width: 130px; }
+.col-material { width: 240px; }
+.col-sample { width: 80px; }
+.col-flag { width: 56px; text-align: center; }
+.col-exclude { width: 220px; }
+.row--no-reply td { background: #f3f4f6; }
+
+.progress { width: 120px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+.progress__bar { height: 100%; background: var(--c-primary); }
+
+.status--draft { background: #eef1f5; }
+.status--review { background: var(--c-warn-bg); }
+.status--submitted { background: var(--c-info-bg); color: var(--c-primary); }
+.status--done { background: #e7f6ec; color: #1e6b3a; }
+.submit--submitted, .submit--confirmed { background: #e7f6ec; color: #1e6b3a; }
+.submit--rejected { background: var(--c-error-bg); color: var(--c-error); }
