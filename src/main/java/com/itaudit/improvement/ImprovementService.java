@@ -367,6 +367,33 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
                 m.getKind().getLabel() + " 최종 확정" + (StringUtils.hasText(comment) ? ", 의견=" + comment.trim() : ""));
     }
 
+    /** 완료 검토에서 고를 수 있는 처리 상태 */
+    public enum ReviewOutcome {
+        /** 최종확정 (종결) */
+        CLOSED,
+        /** 진행중으로 되돌림 */
+        IN_PROGRESS,
+        /** 예정으로 되돌림 */
+        PLANNED
+    }
+
+    /**
+     * 완료 검토 처리: 선택한 상태로 변경한다. 최종확정이면 코멘트는 선택(최종확정 의견),
+     * 이전 단계로 되돌리면 코멘트가 필수(반려 사유)이며 담당자에게 보인다.
+     */
+    @Transactional
+    public ReviewOutcome review(Long id, ReviewOutcome outcome, String comment, LoginUser actor) {
+        if (outcome == null) {
+            throw new BusinessException("변경할 상태를 선택하세요.");
+        }
+        if (outcome == ReviewOutcome.CLOSED) {
+            close(id, comment, actor);
+        } else {
+            sendBack(id, ActionResult.valueOf(outcome.name()), comment, actor);
+        }
+        return outcome;
+    }
+
     /**
      * 완료 반려: 조치 결과를 이전 단계(진행중·예정)로 되돌린다. 사유는 필수이며 담당자에게 보인다.
      * 담당자는 되돌려진 뒤 다시 수정해 완료로 올릴 수 있다.

@@ -35,20 +35,21 @@
             <p class="small muted" th:if="${!m.reviewPending}">담당자가 조치 결과를 '완료'로 올리면 여기서 검토해 최종확정하거나 이전 단계로 되돌릴 수 있습니다.</p>
             <th:block th:if="${m.reviewPending}">
                 <p class="alert alert--warn">담당자가 조치를 <strong>완료</strong>했습니다. 조치 현황과 증빙자료를 확인하고 최종확정하거나, 보완이 필요하면 이전 단계로 되돌리세요.</p>
-                <div class="review-actions-grid">
-                    <form th:action="@{/improvements/{id}/close(id=${m.improvementId})}" method="post" class="form">
-                        <h4>최종확정</h4>
-                        <input type="text" name="comment" maxlength="1000" placeholder="최종확정 의견 (선택)" class="input--block">
-                        <div class="form__actions"><button type="submit" class="button button--primary">최종확정</button></div>
-                    </form>
-                    <form th:action="@{/improvements/{id}/return(id=${m.improvementId})}" method="post" class="form">
-                        <h4>이전 단계로 되돌리기</h4>
-                        <label class="checkbox"><input type="radio" name="target" value="IN_PROGRESS" checked> 진행중으로</label>
-                        <label class="checkbox"><input type="radio" name="target" value="PLANNED"> 예정으로</label>
-                        <textarea name="reason" rows="2" maxlength="1000" required placeholder="반려 사유 (담당자에게 보입니다)" class="input--block"></textarea>
-                        <div class="form__actions"><button type="submit" class="button button--danger">되돌리기</button></div>
-                    </form>
-                </div>
+                <form th:action="@{/improvements/{id}/review(id=${m.improvementId})}" method="post" class="form" data-completion-review>
+                    <label>변경할 상태
+                        <select name="status" required>
+                            <option value="">상태 선택</option>
+                            <option value="CLOSED">최종확정 (검토 완료)</option>
+                            <option value="IN_PROGRESS">진행중으로 되돌리기 (반려)</option>
+                            <option value="PLANNED">예정으로 되돌리기 (반려)</option>
+                        </select>
+                    </label>
+                    <label><span data-comment-label>코멘트</span>
+                        <textarea name="comment" rows="3" maxlength="1000" class="input--block"
+                                  placeholder="최종확정은 의견(선택), 되돌릴 때는 반려 사유(필수)를 적습니다. 반려 사유는 담당자에게 보입니다."></textarea>
+                    </label>
+                    <div class="form__actions"><button type="submit" class="button button--primary">완료</button></div>
+                </form>
             </th:block>
         </th:block>
     </section>
@@ -134,5 +135,6 @@
        th:text="|${#temporals.format(m.closedAt, 'yyyy-MM-dd')} 최종확정된 건입니다.|"></p>
 </main>
 <script th:src="@{/js/round.js}"></script>
+<script th:src="@{/js/completion-review.js}"></script>
 </body>
 </html>

@@ -97,7 +97,7 @@ class CompletionReviewTest {
         // 주관자: 검토 패널(최종확정·되돌리기), 목록 태그, 대시보드 대기 건수, 필터
         mvc.perform(get("/improvements/" + id).with(user(lead)))
                 .andExpect(content().string(Matchers.containsString("완료 검토")))
-                .andExpect(content().string(Matchers.containsString("이전 단계로 되돌리기")));
+                .andExpect(content().string(Matchers.containsString("변경할 상태")));
         mvc.perform(get("/improvements").with(user(lead)))
                 .andExpect(content().string(Matchers.containsString("검토 대기")));
         mvc.perform(get("/improvements").param("reviewPendingOnly", "true").with(user(lead)))
@@ -244,8 +244,11 @@ class CompletionReviewTest {
         mvc.perform(complete(kim));
         String detail = mvc.perform(get("/improvements/" + id).with(user(lead))).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(detail).contains("action=\"/improvements/" + id + "/close\"")
-                .contains("action=\"/improvements/" + id + "/return\"").contains(">최종확정</button>").contains(">되돌리기</button>");
+        // 상태 선택(셀렉트박스) + 코멘트 + 완료 버튼 한 폼
+        assertThat(detail).contains("action=\"/improvements/" + id + "/review\"").contains("name=\"status\"")
+                .contains("value=\"CLOSED\"").contains("value=\"IN_PROGRESS\"").contains("value=\"PLANNED\"")
+                .contains("name=\"comment\"").contains(">완료</button>").contains("completion-review.js");
+        assertThat(detail).doesNotContain(">되돌리기</button>").doesNotContain(">최종확정</button>");
 
         mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()).param("comment", "확인"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements/" + id))
@@ -266,5 +269,76 @@ class CompletionReviewTest {
                 .andExpect(flash().attribute("message", Matchers.containsString("이전 단계(진행중)로 되돌렸습니다")));
         assertThat(current().getReturnComment()).isEqualTo("상세에서 반려");
         mvc.perform(get("/improvements").with(user(lead))).andExpect(content().string(Matchers.containsString("반려됨")));
+    }
+
+    // ---------- 상태 선택 + 코멘트 + 완료 ----------
+
+    @Test
+    void 상태를_최종확정으로_선택하고_완료하면_코멘트는_의견으로_저장된다() throws Exception {
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf())
+                        .param("status", "CLOSED").param("comment", "증빙 확인 완료"))
+                .andExpect(flash().attribute("message", "최종확정했습니다."))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements/" + id));
+        Improvement m = current();
+        assertThat(m.isClosed()).isTrue();
+        assertThat(m.getCloseComment()).isEqualTo("증빙 확인 완료");
+    }
+
+    @Test
+    void 최종확정은_코멘트_없이도_완료할_수_있다() throws Exception {
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf()).param("status", "CLOSED"))
+                .andExpect(flash().attribute("message", "최종확정했습니다."));
+        assertThat(current().isClosed()).isTrue();
+        assertThat(current().getCloseComment()).isNull();
+    }
+
+    @Test
+    void 진행중_예정_상태를_선택하면_코멘트가_반려_사유가_된다() throws Exception {
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf())
+                        .param("status", "PLANNED").param("comment", "착수 전부터 재확인"))
+                .andExpect(flash().attribute("message", Matchers.containsString("이전 단계(예정)로 되돌렸습니다")));
+        Improvement m = current();
+        assertThat(m.getActionResult()).isEqualTo(ActionResult.PLANNED);
+        assertThat(m.getReturnComment()).isEqualTo("착수 전부터 재확인");
+        mvc.perform(get("/improvements/" + id).with(user(kim)))
+                .andExpect(content().string(Matchers.containsString("사유: 착수 전부터 재확인")));
+
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf())
+                        .param("status", "IN_PROGRESS").param("comment", "증빙 보완"))
+                .andExpect(flash().attribute("message", Matchers.containsString("이전 단계(진행중)로 되돌렸습니다")));
+        assertThat(current().getActionResult()).isEqualTo(ActionResult.IN_PROGRESS);
+    }
+
+    @Test
+    void 상태를_고르지_않거나_되돌리는데_코멘트가_없으면_처리되지_않는다() throws Exception {
+        mvc.perform(complete(kim));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf()).param("comment", "x"))
+                .andExpect(flash().attribute("errorMessage", "변경할 상태를 선택하세요."));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf()).param("status", "IN_PROGRESS"))
+                .andExpect(flash().attribute("errorMessage", "반려 사유을(를) 입력하세요."));
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf())
+                        .param("status", "IN_PROGRESS").param("comment", "  "))
+                .andExpect(flash().attribute("errorMessage", "반려 사유을(를) 입력하세요."));
+        assertThat(current().isReviewPending()).as("아무것도 바뀌지 않음").isTrue();
+        // 완료(DONE) 같은 잘못된 값은 요청 자체가 거부
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf()).param("status", "DONE"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void 완료가_아닌_건과_주관자가_아닌_역할은_완료_검토를_할_수_없다() throws Exception {
+        mvc.perform(post("/improvements/" + id + "/review").with(user(lead)).with(csrf())
+                        .param("status", "CLOSED"))
+                .andExpect(flash().attribute("errorMessage", "조치 결과가 '완료'인 건만 최종확정할 수 있습니다."));
+        mvc.perform(complete(kim));
+        for (LoginUser u : List.of(kim, dept, testUsers.user("cr-viewer3", Role.VIEWER))) {
+            mvc.perform(post("/improvements/" + id + "/review").with(user(u)).with(csrf()).param("status", "CLOSED"))
+                    .andExpect(status().isForbidden());
+        }
+        assertThat(current().isReviewPending()).isTrue();
     }
 }

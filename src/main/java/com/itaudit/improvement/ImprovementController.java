@@ -153,6 +153,23 @@ public class ImprovementController {
         return "redirect:/improvements/" + id;
     }
 
+    /** 완료 검토: 상태(최종확정·진행중·예정)를 고르고 코멘트를 적어 처리한다 */
+    @PostMapping("/{id}/review")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String review(@PathVariable Long id, @RequestParam(required = false) ImprovementService.ReviewOutcome status,
+                         @RequestParam(required = false) String comment,
+                         @AuthenticationPrincipal LoginUser user, RedirectAttributes ra) {
+        try {
+            ImprovementService.ReviewOutcome outcome = service.review(id, status, comment, user);
+            ra.addFlashAttribute("message", outcome == ImprovementService.ReviewOutcome.CLOSED
+                    ? "최종확정했습니다."
+                    : "이전 단계(" + ActionResult.valueOf(outcome.name()).getLabel() + ")로 되돌렸습니다. 담당자가 사유를 확인하고 다시 조치합니다.");
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/improvements/" + id;
+    }
+
     @PostMapping("/{id}/close")
     @PreAuthorize("hasRole('AUDIT_LEAD')")
     public String close(@PathVariable Long id, @RequestParam(required = false) String comment,
