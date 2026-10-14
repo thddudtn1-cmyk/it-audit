@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.checklist.ChecklistMapper">
+
+    <sql id="columns">
+        item_id, apply_year, seq_no, audit_area, audit_item, item_detail, audit_period, regulation, use_yn,
+        created_by, created_at, updated_by, updated_at
+    </sql>
+
+    <select id="findYears" resultType="int">
+        SELECT DISTINCT apply_year FROM checklist_item ORDER BY apply_year DESC
+    </select>
+
+    <select id="findByYear" resultType="com.itaudit.checklist.ChecklistItem">
+        SELECT <include refid="columns"/>
+          FROM checklist_item
+         WHERE apply_year = #{year}
+        <if test="area != null">AND audit_area = #{area}</if>
+        <if test="period != null">AND audit_period = #{period}</if>
+         ORDER BY seq_no
+    </select>
+
+    <select id="findById" resultType="com.itaudit.checklist.ChecklistItem">
+        SELECT <include refid="columns"/> FROM checklist_item WHERE item_id = #{itemId}
+    </select>
+
+    <select id="findBySeqNo" resultType="com.itaudit.checklist.ChecklistItem">
+        SELECT <include refid="columns"/> FROM checklist_item WHERE apply_year = #{year} AND seq_no = #{seqNo}
+    </select>
+
+    <select id="countByYear" resultType="int">
+        SELECT COUNT(*) FROM checklist_item WHERE apply_year = #{year}
+    </select>
+
+    <select id="findAuditItems" resultType="string">
+        SELECT DISTINCT audit_item FROM checklist_item WHERE apply_year = #{year} ORDER BY audit_item
+    </select>
+
+    <select id="findRegulations" resultType="string">
+        SELECT DISTINCT regulation FROM checklist_item
+         WHERE apply_year = #{year} AND regulation IS NOT NULL
+         ORDER BY regulation
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="itemId" keyColumn="item_id">
+        INSERT INTO checklist_item (apply_year, seq_no, audit_area, audit_item, item_detail, audit_period,
+                                    regulation, use_yn, created_by, created_at, updated_by, updated_at)
+        VALUES (#{applyYear}, #{seqNo}, #{auditArea}, #{auditItem}, #{itemDetail}, #{auditPeriod},
+                #{regulation}, #{useYn}, #{createdBy}, #{createdAt}, #{updatedBy}, #{updatedAt})
+    </insert>
+
+    <update id="update">
+        UPDATE checklist_item
+           SET seq_no = #{seqNo},
+               audit_area = #{auditArea},
+               audit_item = #{auditItem},
+               item_detail = #{itemDetail},
+               audit_period = #{auditPeriod},
+               regulation = #{regulation},
+               use_yn = #{useYn},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE item_id = #{itemId}
+    </update>
+
+    <delete id="deleteByYear">
+        DELETE FROM checklist_item WHERE apply_year = #{year}
+    </delete>
+</mapper>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${itemId == null} ? '체크리스트 항목 추가' : '체크리스트 항목 수정')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--narrow">
+    <h2 th:text="|${year}년 체크리스트 항목 ${itemId == null ? '추가' : '수정'}|">항목</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form th:object="${form}" method="post" class="form"
+          th:action="${itemId == null} ? @{/checklist/items(year=${year})} : @{/checklist/items/{id}(id=${itemId})}">
+        <label>순번
+            <input type="number" th:field="*{seqNo}" min="1" max="9999" required class="input--short">
+            <small class="error" th:if="${#fields.hasErrors('seqNo')}" th:errors="*{seqNo}"></small>
+        </label>
+        <label>감사 영역
+            <select th:field="*{auditArea}" required>
+                <option value="">선택</option>
+                <option th:each="a : ${areas}" th:value="${a}" th:text="${a.label}">영역</option>
+            </select>
+            <small class="error" th:if="${#fields.hasErrors('auditArea')}" th:errors="*{auditArea}"></small>
+        </label>
+        <label>감사 항목
+            <input type="text" th:field="*{auditItem}" list="audit-items" required maxlength="200">
+            <datalist id="audit-items"><option th:each="v : ${auditItems}" th:value="${v}"></option></datalist>
+            <small class="error" th:if="${#fields.hasErrors('auditItem')}" th:errors="*{auditItem}"></small>
+        </label>
+        <label>항목 상세
+            <textarea th:field="*{itemDetail}" rows="5" required maxlength="2000"></textarea>
+            <small class="error" th:if="${#fields.hasErrors('itemDetail')}" th:errors="*{itemDetail}"></small>
+        </label>
+        <label>감사 시기
+            <select th:field="*{auditPeriod}" required>
+                <option value="">선택</option>
+                <option th:each="p : ${periods}" th:value="${p}" th:text="${p.label}">시기</option>
+            </select>
+            <small class="error" th:if="${#fields.hasErrors('auditPeriod')}" th:errors="*{auditPeriod}"></small>
+        </label>
+        <label>법규/규정
+            <input type="text" th:field="*{regulation}" list="regulations" maxlength="500">
+            <datalist id="regulations"><option th:each="v : ${regulations}" th:value="${v}"></option></datalist>
+            <small class="error" th:if="${#fields.hasErrors('regulation')}" th:errors="*{regulation}"></small>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" th:field="*{active}"> 사용 (해제하면 분기 회차 생성 대상에서 빠집니다)
+        </label>
+        <div class="form__actions">
+            <a class="button" th:href="@{/checklist(year=${year})}">목록</a>
+            <button type="submit" class="button button--primary">저장</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.itaudit.auth;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,13 +15,19 @@ import com.itaudit.common.BusinessException;
 public class AccountController {
 
     private final AccountService accountService;
+    private final boolean demoLoginEnabled;
 
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountService accountService,
+                             @Value("${app.demo-login.enabled:false}") boolean demoLoginEnabled) {
         this.accountService = accountService;
+        this.demoLoginEnabled = demoLoginEnabled;
     }
 
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
+        if (demoLoginEnabled) {
+            model.addAttribute("demoAccounts", DemoAccounts.all());
+        }
         return "auth/login";
     }
 

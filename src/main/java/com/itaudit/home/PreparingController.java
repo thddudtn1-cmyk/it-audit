@@ -22,11 +22,6 @@ public class PreparingController {
         return preparing(model, Menu.MY_TASKS);
     }
 
-    @GetMapping("/checklist")
-    public String checklist(Model model) {
-        return preparing(model, Menu.CHECKLIST);
-    }
-
     @GetMapping("/rounds")
     public String rounds(Model model) {
         return preparing(model, Menu.ROUNDS);

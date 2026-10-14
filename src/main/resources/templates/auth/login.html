@@ -2,20 +2,38 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('로그인')}"></head>
 <body class="login-page">
-<main class="login-box">
+<main class="login-box" th:classappend="${demoAccounts != null} ? 'login-box--demo'">
     <h1>IT 자체감사 관리</h1>
     <div class="alert alert--error" th:if="${param.error}">아이디 또는 비밀번호가 올바르지 않습니다.</div>
+    <div class="alert alert--error" th:if="${demoError}" th:text="${demoError}">데모 오류</div>
     <div class="alert alert--info" th:if="${param.logout}">로그아웃했습니다.</div>
     <div class="alert alert--info" th:if="${param.expired}">세션이 만료되었습니다. 다시 로그인하세요.</div>
-    <form th:action="@{/login}" method="post">
-        <label>아이디
-            <input type="text" name="loginId" autocomplete="username" required autofocus>
-        </label>
-        <label>비밀번호
-            <input type="password" name="password" autocomplete="current-password" required>
-        </label>
-        <button type="submit" class="button button--primary button--block">로그인</button>
-    </form>
+
+    <section th:if="${demoAccounts != null}" class="demo-login">
+        <h2>역할을 골라 시작하기 <span class="tag">시연용</span></h2>
+        <div class="demo-login__roles">
+            <form th:each="d : ${demoAccounts}" th:action="@{/demo-login}" method="post">
+                <input type="hidden" name="role" th:value="${d.role}">
+                <button type="submit" class="role-card">
+                    <strong th:text="${d.role.label}">역할</strong>
+                    <span th:text="${d.description}">설명</span>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <details th:open="${demoAccounts == null or param.error != null}" class="id-login">
+        <summary th:if="${demoAccounts != null}">아이디로 로그인</summary>
+        <form th:action="@{/login}" method="post">
+            <label>아이디
+                <input type="text" name="loginId" autocomplete="username" required>
+            </label>
+            <label>비밀번호
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="button button--primary button--block">로그인</button>
+        </form>
+    </details>
 </main>
 </body>
 </html>

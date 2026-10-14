@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('체크리스트 관리')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2>체크리스트 관리</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form method="get" th:action="@{/checklist}" class="filter-bar">
+        <label>적용연도
+            <select name="year" onchange="this.form.submit()">
+                <option th:if="${!years.contains(year)}" th:value="${year}" th:text="|${year}년 (없음)|" selected></option>
+                <option th:each="y : ${years}" th:value="${y}" th:text="|${y}년|" th:selected="${y == year}">2026년</option>
+            </select>
+        </label>
+        <label>감사 영역
+            <select name="area" onchange="this.form.submit()">
+                <option value="">전체</option>
+                <option th:each="a : ${areas}" th:value="${a}" th:text="${a.label}" th:selected="${a == area}">영역</option>
+            </select>
+        </label>
+        <label>감사 시기
+            <select name="period" onchange="this.form.submit()">
+                <option value="">전체</option>
+                <option th:each="p : ${periods}" th:value="${p}" th:text="${p.label}" th:selected="${p == period}">시기</option>
+            </select>
+        </label>
+        <noscript><button type="submit" class="button">조회</button></noscript>
+    </form>
+
+    <div class="toolbar">
+        <span>
+            <span th:text="|항목 상세 ${#lists.size(rows)}건 · 감사 항목 ${auditItemCount}개|">항목 상세 0건</span>
+            <span class="muted" th:if="${area != null or period != null}" th:text="|(전체 ${totalCount}건 중)|"></span>
+        </span>
+        <span class="toolbar__actions">
+            <a class="button" th:href="@{/checklist/upload(year=${year})}">엑셀 업로드</a>
+            <a class="button" th:href="@{/checklist/items/new(year=${year})}">항목 추가</a>
+        </span>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table table--checklist">
+            <thead>
+            <tr>
+                <th class="col-no">순번</th>
+                <th class="col-area">감사 영역</th>
+                <th class="col-item">감사 항목</th>
+                <th>항목 상세</th>
+                <th class="col-period">감사 시기</th>
+                <th class="col-reg">법규/규정</th>
+                <th class="col-use">사용</th>
+                <th class="col-act"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${rows}" th:with="i=${r.item}" th:classappend="${!i.active} ? 'row--inactive'">
+                <td class="num" th:text="${i.seqNo}">1</td>
+                <td th:if="${r.areaRowspan > 0}" th:rowspan="${r.areaRowspan}" class="cell--group" th:text="${i.auditArea.label}">영역</td>
+                <td th:if="${r.auditItemRowspan > 0}" th:rowspan="${r.auditItemRowspan}" class="cell--group" th:text="${i.auditItem}">항목</td>
+                <td class="pre" th:text="${i.itemDetail}">상세</td>
+                <td><span class="tag" th:classappend="${i.auditPeriod.name() == 'EVERY'} ? 'tag--strong'" th:text="${i.auditPeriod.label}">1분기</span></td>
+                <td class="pre small" th:text="${i.regulation}">규정</td>
+                <td th:text="${i.active} ? '사용' : '미사용'">사용</td>
+                <td><a th:href="@{/checklist/items/{id}/edit(id=${i.itemId})}">수정</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(rows)}">
+                <td colspan="8" class="empty">
+                    <span th:text="|${year}년 체크리스트가 없습니다.|"></span>
+                    <a th:href="@{/checklist/upload(year=${year})}">② 체크리스트 엑셀을 올리거나</a>
+                    다른 연도를 복사해 만드세요.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <section class="panel" th:if="${totalCount > 0}">
+        <h3>새 연도 개정본 만들기</h3>
+        <form th:action="@{/checklist/copy}" method="post" class="form form--inline">
+            <input type="hidden" name="fromYear" th:value="${year}">
+            <span th:text="|${year}년 체크리스트 ${totalCount}건을|"></span>
+            <input type="number" name="toYear" th:value="${nextYear}" min="2000" max="2100" class="input--short" required>
+            <span>년으로 복사</span>
+            <button type="submit" class="button">복사</button>
+        </form>
+        <small class="muted">복사한 뒤 바뀐 항목만 수정하면 됩니다. 이미 항목이 있는 연도로는 복사할 수 없습니다.</small>
+    </section>
+</main>
+</body>
+</html>

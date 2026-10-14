@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('체크리스트 엑셀 업로드')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--narrow">
+    <h2>체크리스트 엑셀 업로드</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <form th:action="@{/checklist/upload}" method="post" enctype="multipart/form-data" class="form">
+        <label>적용연도
+            <input type="number" name="year" th:value="${year}" min="2000" max="2100" required>
+        </label>
+        <label>엑셀 파일 (.xlsx)
+            <input type="file" name="file" accept=".xlsx" required>
+            <small>② IT자체감사 체크리스트 양식 그대로 올리면 됩니다. 헤더 행(순번 · 감사 영역 · 감사 항목 · 항목 상세 · 감사 시기 · 법규/규정)을 찾아 그 아래 행을 읽습니다.</small>
+        </label>
+        <div class="form__actions">
+            <a class="button" th:href="@{/checklist(year=${year})}">취소</a>
+            <button type="submit" class="button button--primary">미리보기</button>
+        </div>
+    </form>
+    <div class="panel small">
+        <strong>읽는 규칙</strong>
+        <ul>
+            <li>병합된 칸은 병합 범위의 첫 칸 값을 씁니다.</li>
+            <li>감사 영역·감사 항목이 비어 있으면 위 행의 값을 이어받습니다.</li>
+            <li>감사 시기는 1분기 · 2분기 · 3분기 · 4분기 · 매분기 중 하나여야 합니다.</li>
+            <li>같은 연도에 이미 항목이 있으면 확정할 때 전부 대체됩니다.</li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>

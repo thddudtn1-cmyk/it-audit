@@ -7,12 +7,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 관리자 계정이 하나도 없으면 초기 관리자를 만든다. 첫 로그인 시 비밀번호 변경이 강제된다. */
+/** 관리자 계정이 하나도 없으면 초기 관리자를 만든다. 첫 로그인 시 비밀번호 변경이 강제된다.
+ * 데모 계정(DemoAccountInitializer)보다 먼저 실행되어야 데모 관리자 때문에 건너뛰지 않는다. */
 @Component
+@Order(1)
 public class InitAdminRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(InitAdminRunner.class);

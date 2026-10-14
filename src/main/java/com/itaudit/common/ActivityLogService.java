@@ -24,6 +24,10 @@ public class ActivityLogService {
     public static final String USER_PASSWORD_RESET = "USER_PASSWORD_RESET";
     public static final String TEAM_CREATE = "TEAM_CREATE";
     public static final String TEAM_UPDATE = "TEAM_UPDATE";
+    public static final String CHECKLIST_UPLOAD = "CHECKLIST_UPLOAD";
+    public static final String CHECKLIST_COPY = "CHECKLIST_COPY";
+    public static final String CHECKLIST_CREATE = "CHECKLIST_CREATE";
+    public static final String CHECKLIST_UPDATE = "CHECKLIST_UPDATE";
 
     private final ActivityLogMapper mapper;
 
