@@ -36,6 +36,11 @@ public class RoundItem {
     private LocalDate plannedDate;
     private Long submittedBy;
     private LocalDateTime submittedAt;
+    // 주관자 검토 (F-05)
+    /** 반려 사유 */
+    private String reviewComment;
+    private Long reviewedBy;
+    private LocalDateTime reviewedAt;
     private LocalDateTime createdAt;
     private Long updatedBy;
     private LocalDateTime updatedAt;
@@ -130,6 +135,12 @@ public class RoundItem {
     public void setSubmittedBy(Long submittedBy) { this.submittedBy = submittedBy; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public String getReviewComment() { return reviewComment; }
+    public void setReviewComment(String reviewComment) { this.reviewComment = reviewComment; }
+    public Long getReviewedBy() { return reviewedBy; }
+    public void setReviewedBy(Long reviewedBy) { this.reviewedBy = reviewedBy; }
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
     public int getEvidenceCount() { return evidenceCount; }
     public void setEvidenceCount(int evidenceCount) { this.evidenceCount = evidenceCount; }
     public RoundStatus getRoundStatus() { return roundStatus; }

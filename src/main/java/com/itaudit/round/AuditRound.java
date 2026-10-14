@@ -13,6 +13,9 @@ public class AuditRound {
     private LocalDateTime createdAt;
     private Long updatedBy;
     private LocalDateTime updatedAt;
+    /** 감사부서 제출 (F-05) */
+    private Long submittedBy;
+    private LocalDateTime submittedAt;
 
     // 집계 (목록·상세 요약)
     private int totalCount;
@@ -20,6 +23,7 @@ public class AuditRound {
     private int noReplyCount;
     private int assignedCount;
     private int submittedCount;
+    private int confirmedCount;
 
     public String getLabel() {
         return roundYear + "년 " + quarter + "분기";
@@ -43,6 +47,21 @@ public class AuditRound {
         return getTargetCount() - noReplyCount;
     }
 
+    /** 제출 대상 항목이 모두 제출(또는 확인)되었는지 → 검토중 */
+    public boolean isAllCollected() {
+        return getTargetCount() > 0 && submittedCount == getSubmitTargetCount();
+    }
+
+    /** 감사부서 제출 가능: 검토중이고 제출 대상이 모두 확인됨 */
+    public boolean isReadyToSubmit() {
+        return status == RoundStatus.REVIEW && confirmedCount == getSubmitTargetCount();
+    }
+
+    /** 확인을 기다리는 항목 수 (제출됐지만 미확인) */
+    public int getAwaitingConfirmCount() {
+        return submittedCount - confirmedCount;
+    }
+
     public int getSubmitRate() {
         int target = getSubmitTargetCount();
         return target <= 0 ? 0 : (int) Math.round(submittedCount * 100.0 / target);
@@ -64,6 +83,12 @@ public class AuditRound {
     public void setUpdatedBy(Long updatedBy) { this.updatedBy = updatedBy; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Long getSubmittedBy() { return submittedBy; }
+    public void setSubmittedBy(Long submittedBy) { this.submittedBy = submittedBy; }
+    public LocalDateTime getSubmittedAt() { return submittedAt; }
+    public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public int getConfirmedCount() { return confirmedCount; }
+    public void setConfirmedCount(int confirmedCount) { this.confirmedCount = confirmedCount; }
     public int getTotalCount() { return totalCount; }
     public void setTotalCount(int totalCount) { this.totalCount = totalCount; }
     public int getExcludedCount() { return excludedCount; }

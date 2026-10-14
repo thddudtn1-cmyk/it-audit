@@ -4,18 +4,22 @@
 
     <sql id="roundWithCounts">
         SELECT r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at,
+               r.submitted_by, r.submitted_at,
                COUNT(i.round_item_id) AS total_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'Y' THEN 1 ELSE 0 END), 0) AS excluded_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'Y' THEN 1 ELSE 0 END), 0) AS no_reply_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.assignee_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS assigned_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'N'
-                                  AND i.submit_status IN ('SUBMITTED', 'CONFIRMED') THEN 1 ELSE 0 END), 0) AS submitted_count
+                                  AND i.submit_status IN ('SUBMITTED', 'CONFIRMED') THEN 1 ELSE 0 END), 0) AS submitted_count,
+               COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'N'
+                                  AND i.submit_status = 'CONFIRMED' THEN 1 ELSE 0 END), 0) AS confirmed_count
           FROM audit_round r
           LEFT JOIN round_item i ON i.round_id = r.round_id
     </sql>
 
     <sql id="roundGroupBy">
-         GROUP BY r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at
+         GROUP BY r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at,
+                  r.submitted_by, r.submitted_at
     </sql>
 
     <select id="findRounds" resultType="com.itaudit.round.AuditRound">
@@ -48,7 +52,7 @@
         i.round_item_id, i.round_id, i.checklist_item_id, i.team_code, i.assignee_id, i.request_material,
         i.sample_size, i.no_reply_yn, i.excluded_yn, i.exclude_reason, i.submit_status,
         i.inspection_result, i.inspection_detail, i.remark1, i.action_plan, i.planned_date,
-        i.submitted_by, i.submitted_at,
+        i.submitted_by, i.submitted_at, i.review_comment, i.reviewed_by, i.reviewed_at,
         i.created_at, i.updated_by, i.updated_at,
         (SELECT COUNT(*) FROM evidence e
           WHERE e.owner_type = 'ROUND_ITEM' AND e.owner_id = i.round_item_id AND e.deleted_yn = 'N') AS evidence_count,
@@ -125,6 +129,30 @@
                updated_by = #{updatedBy},
                updated_at = #{updatedAt}
          WHERE round_item_id = #{roundItemId}
+    </update>
+
+    <update id="updateReview">
+        UPDATE round_item
+           SET submit_status = #{submitStatus},
+               review_comment = #{reviewComment},
+               reviewed_by = #{reviewedBy},
+               reviewed_at = #{reviewedAt},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE round_item_id = #{roundItemId}
+    </update>
+
+    <update id="updateRoundStatus">
+        UPDATE audit_round
+           SET status = #{status}, updated_by = #{updatedBy}, updated_at = #{updatedAt}
+         WHERE round_id = #{roundId}
+    </update>
+
+    <update id="submitRound">
+        UPDATE audit_round
+           SET status = 'SUBMITTED', submitted_by = #{submittedBy}, submitted_at = #{submittedAt},
+               updated_by = #{submittedBy}, updated_at = #{submittedAt}
+         WHERE round_id = #{roundId} AND status = 'REVIEW'
     </update>
 
     <insert id="insertItem" useGeneratedKeys="true" keyProperty="roundItemId" keyColumn="round_item_id">

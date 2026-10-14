@@ -24,9 +24,11 @@ import com.itaudit.common.BusinessException;
 public class RoundController {
 
     private final RoundService service;
+    private final ReviewService reviewService;
 
-    public RoundController(RoundService service) {
+    public RoundController(RoundService service, ReviewService reviewService) {
         this.service = service;
+        this.reviewService = reviewService;
     }
 
     @GetMapping
@@ -83,7 +85,69 @@ public class RoundController {
         model.addAttribute("round", round);
         model.addAttribute("items", items.stream().filter(i -> !i.isExcluded()).toList());
         model.addAttribute("excludedItems", items.stream().filter(RoundItem::isExcluded).toList());
+        model.addAttribute("notReadyReason", round.isReadyToSubmit() ? null : ReviewService.notReadyReason(round));
         return "round/detail";
+    }
+
+    // ---------- 총괄표 검토·감사부서 제출 (주관자, F-05) ----------
+
+    @PostMapping("/{roundId}/items/{itemId}/confirm")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String confirm(@PathVariable Long roundId, @PathVariable Long itemId,
+                          @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        return reviewAction(roundId, itemId, ra, () -> reviewService.confirm(itemId, actor), "확인했습니다.");
+    }
+
+    @PostMapping("/{roundId}/items/{itemId}/cancel-confirm")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String cancelConfirm(@PathVariable Long roundId, @PathVariable Long itemId,
+                                @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        return reviewAction(roundId, itemId, ra, () -> reviewService.cancelConfirm(itemId, actor), "확인을 취소했습니다.");
+    }
+
+    @PostMapping("/{roundId}/items/{itemId}/reject")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String reject(@PathVariable Long roundId, @PathVariable Long itemId, @RequestParam String reason,
+                         @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        return reviewAction(roundId, itemId, ra, () -> reviewService.reject(itemId, reason, actor),
+                "반려했습니다. 담당자가 다시 입력해 제출해야 합니다.");
+    }
+
+    @PostMapping("/{roundId}/confirm-all")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String confirmAll(@PathVariable Long roundId, @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        try {
+            int count = reviewService.confirmAll(roundId, actor);
+            ra.addFlashAttribute("message", count == 0 ? "확인할 제출 항목이 없습니다." : count + "건을 확인했습니다.");
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/rounds/" + roundId;
+    }
+
+    @PostMapping("/{roundId}/submit")
+    @PreAuthorize("hasRole('AUDIT_LEAD')")
+    public String submit(@PathVariable Long roundId, @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        try {
+            reviewService.submitToAuditDept(roundId, actor);
+            ra.addFlashAttribute("message", "감사부서에 제출했습니다. 이제 회차가 잠겨 배정·점검 입력을 바꿀 수 없습니다.");
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/rounds/" + roundId;
+    }
+
+    private String reviewAction(Long roundId, Long itemId, RedirectAttributes ra, Runnable action, String message) {
+        try {
+            if (!roundId.equals(service.findItemRoundId(itemId))) {
+                throw new BusinessException("이 회차의 항목이 아닙니다.");
+            }
+            action.run();
+            ra.addFlashAttribute("message", message);
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/rounds/" + roundId + "#item-" + itemId;
     }
 
     // ---------- 배정 편집 (주관자) ----------

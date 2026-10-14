@@ -20,6 +20,7 @@ import com.itaudit.evidence.EvidenceAccess;
 import com.itaudit.evidence.EvidenceOwnerType;
 import com.itaudit.evidence.EvidenceService;
 import com.itaudit.round.AuditRound;
+import com.itaudit.round.ReviewService;
 import com.itaudit.round.RoundItem;
 import com.itaudit.round.RoundMapper;
 import com.itaudit.round.SubmitStatus;
@@ -34,13 +35,15 @@ public class InspectionService implements EvidenceAccess {
     private final RoundMapper roundMapper;
     private final EvidenceService evidenceService;
     private final ActivityLogService activityLog;
+    private final ReviewService reviewService;
 
     // EvidenceService 가 접근 규칙(EvidenceAccess)으로 이 서비스를 받으므로 순환 참조를 @Lazy 로 끊는다
     public InspectionService(RoundMapper roundMapper, @Lazy EvidenceService evidenceService,
-                             ActivityLogService activityLog) {
+                             ActivityLogService activityLog, ReviewService reviewService) {
         this.roundMapper = roundMapper;
         this.evidenceService = evidenceService;
         this.activityLog = activityLog;
+        this.reviewService = reviewService;
     }
 
     /** 화면에 필요한 항목·회차 묶음 */
@@ -141,6 +144,7 @@ public class InspectionService implements EvidenceAccess {
             roundMapper.updateSubmitStatus(item);
             activityLog.log(ActivityLogService.INSPECTION_SUBMIT, "ROUND_ITEM", roundItemId,
                     where + " 제출, 점검결과=" + label(item.getInspectionResult()) + resultChange);
+            reviewService.refreshStatus(item.getRoundId(), actor);
         } else {
             activityLog.log(ActivityLogService.INSPECTION_SAVE, "ROUND_ITEM", roundItemId,
                     where + " 임시저장" + resultChange + (newFiles.isEmpty() ? "" : ", 파일 " + newFiles.size() + "건"));

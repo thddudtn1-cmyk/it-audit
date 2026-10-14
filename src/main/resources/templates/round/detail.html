@@ -16,10 +16,22 @@
         <span><strong>배정</strong> <span th:text="|${round.assignedCount} / ${round.targetCount}|">0/14</span></span>
         <span><strong>회신불필요</strong> <span th:text="|${round.noReplyCount}건|">0건</span></span>
         <span><strong>제출률</strong> <span th:text="|${round.submitRate}% (${round.submittedCount}/${round.submitTargetCount})|">0%</span></span>
+        <span><strong>확인</strong> <span th:text="|${round.confirmedCount} / ${round.submitTargetCount}|">0/14</span></span>
         <span class="toolbar__actions" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable}">
-            <a class="button button--primary" th:href="@{/rounds/{id}/assign(id=${round.roundId})}">배정 편집</a>
+            <a class="button" th:href="@{/rounds/{id}/assign(id=${round.roundId})}">배정 편집</a>
+            <form th:if="${round.awaitingConfirmCount > 0}" th:action="@{/rounds/{id}/confirm-all(id=${round.roundId})}" method="post" class="inline">
+                <button type="submit" class="button" th:text="|제출 항목 일괄 확인 (${round.awaitingConfirmCount}건)|">일괄 확인</button>
+            </form>
+            <form th:action="@{/rounds/{id}/submit(id=${round.roundId})}" method="post" class="inline">
+                <button type="submit" class="button button--primary" th:disabled="${!round.readyToSubmit}"
+                        th:title="${notReadyReason}">감사부서 제출</button>
+            </form>
         </span>
     </div>
+    <div class="alert alert--info" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable and notReadyReason != null}"
+         th:text="|감사부서 제출 전 확인: ${notReadyReason}|">안내</div>
+    <div class="alert alert--info" th:if="${round.submittedAt != null}"
+         th:text="|${#temporals.format(round.submittedAt, 'yyyy-MM-dd HH:mm')} 감사부서에 제출되어 잠긴 회차입니다.|">잠금</div>
 
     <div class="table-wrap">
         <table class="table table--checklist">
@@ -42,7 +54,8 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="i, s : ${items}" th:classappend="${i.noReply} ? 'row--no-reply'">
+            <tr th:each="i, s : ${items}" th:id="|item-${i.roundItemId}|"
+                th:classappend="${i.noReply} ? 'row--no-reply' : (${i.submitStatus.name() == 'REJECTED'} ? 'row--error' : '')">
                 <td class="num" th:text="${s.count}" th:title="|체크리스트 순번 ${i.seqNo}|">1</td>
                 <td th:text="${i.auditArea.label}">영역</td>
                 <td th:text="${i.auditItem}">항목</td>
@@ -67,7 +80,26 @@
                     <span th:if="${i.evidenceCount > 0}" class="tag" th:text="|증적 ${i.evidenceCount}|">증적</span>
                     <span th:if="${i.noReply}" class="tag">회신불필요</span>
                     <span th:unless="${i.noReply}" class="tag" th:classappend="|submit--${i.submitStatus.name().toLowerCase()}|"
-                          th:text="${i.submitStatus.label}">미제출</span>
+                          th:text="${i.submitStatus.label}" th:title="${i.reviewComment}">미제출</span>
+                    <div class="small error" th:if="${i.submitStatus.name() == 'REJECTED'}" th:text="|반려 사유: ${i.reviewComment}|"></div>
+                    <!-- 주관자 검토 -->
+                    <div class="review-actions" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable and !i.noReply}">
+                        <form th:if="${i.submitStatus.name() == 'SUBMITTED'}" method="post" class="inline"
+                              th:action="@{/rounds/{r}/items/{i}/confirm(r=${round.roundId},i=${i.roundItemId})}">
+                            <button type="submit" class="button button--small">확인</button>
+                        </form>
+                        <form th:if="${i.submitStatus.name() == 'CONFIRMED'}" method="post" class="inline"
+                              th:action="@{/rounds/{r}/items/{i}/cancel-confirm(r=${round.roundId},i=${i.roundItemId})}">
+                            <button type="submit" class="link-button small">확인 취소</button>
+                        </form>
+                        <details th:if="${i.submitStatus.name() == 'SUBMITTED' or i.submitStatus.name() == 'CONFIRMED'}" class="reject-box">
+                            <summary class="small">반려</summary>
+                            <form method="post" th:action="@{/rounds/{r}/items/{i}/reject(r=${round.roundId},i=${i.roundItemId})}">
+                                <textarea name="reason" rows="2" maxlength="1000" required placeholder="반려 사유"></textarea>
+                                <button type="submit" class="button button--small">반려</button>
+                            </form>
+                        </details>
+                    </div>
                 </td>
             </tr>
             </tbody>

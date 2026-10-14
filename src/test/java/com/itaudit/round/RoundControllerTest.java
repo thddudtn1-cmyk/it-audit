@@ -103,7 +103,7 @@ class RoundControllerTest {
         assertThat(html).contains("15건").contains("2026년 3분기 회차 생성");
 
         // PRD 3장: 3분기 #23~#32 + 매분기 #7, #21, #22, #34, #42
-        List<RoundCandidate> candidates = new RoundService(roundMapper, checklistMapper, null, null, null)
+        List<RoundCandidate> candidates = new RoundService(roundMapper, checklistMapper, null, null, null, null)
                 .extractCandidates(2026, 3);
         assertThat(candidates).extracting(c -> c.item().getSeqNo())
                 .containsExactly(7, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34, 42);
@@ -111,7 +111,7 @@ class RoundControllerTest {
 
     @Test
     void 분기별_추출_건수가_PRD와_같다() {
-        RoundService service = new RoundService(roundMapper, checklistMapper, null, null, null);
+        RoundService service = new RoundService(roundMapper, checklistMapper, null, null, null, null);
         assertThat(service.extractCandidates(2026, 1)).hasSize(11);
         assertThat(service.extractCandidates(2026, 2)).hasSize(18);
         assertThat(service.extractCandidates(2026, 3)).hasSize(15);
@@ -167,7 +167,7 @@ class RoundControllerTest {
     @Test
     void 사용하지_않는_체크리스트_항목은_추출하지_않는다() {
         jdbc.update("UPDATE checklist_item SET use_yn = 'N' WHERE apply_year = 2026 AND seq_no = 23");
-        RoundService service = new RoundService(roundMapper, checklistMapper, null, null, null);
+        RoundService service = new RoundService(roundMapper, checklistMapper, null, null, null, null);
         assertThat(service.extractCandidates(2026, 3)).extracting(c -> c.item().getSeqNo()).doesNotContain(23).hasSize(14);
     }
 

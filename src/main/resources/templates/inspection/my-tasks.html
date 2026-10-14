@@ -31,6 +31,7 @@
                     <td>
                         <span class="tag" th:classappend="|submit--${i.submitStatus.name().toLowerCase()}|"
                               th:text="${i.inspectionResult != null and i.submitStatus.name() == 'NOT_SUBMITTED'} ? '임시저장' : ${i.submitStatus.label}">미제출</span>
+                        <div class="small error" th:if="${i.submitStatus.name() == 'REJECTED'}" th:text="|반려 사유: ${i.reviewComment}|"></div>
                     </td>
                     <td><a class="button" th:href="@{/inspections/{id}(id=${i.roundItemId})}">입력</a></td>
                 </tr>

@@ -227,3 +227,11 @@ form.inline { display: inline; }
 .result--risk { background: var(--c-error-bg); color: var(--c-error); }
 .col-detail { width: 260px; }
 .nowrap { white-space: nowrap; }
+
+/* 총괄표 검토 (F-05) */
+.button--small { padding: 2px 9px; font-size: 12px; }
+.button:disabled { opacity: .45; cursor: not-allowed; }
+.review-actions { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; align-items: flex-start; }
+.reject-box summary { cursor: pointer; color: var(--c-error); }
+.reject-box textarea { width: 180px; margin: 4px 0; padding: 4px 6px; border: 1px solid var(--c-border); border-radius: 4px; font: inherit; }
+.error { color: var(--c-error); }

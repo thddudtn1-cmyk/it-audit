@@ -40,14 +40,16 @@ public class RoundService {
     private final TeamMapper teamMapper;
     private final AppUserMapper userMapper;
     private final ActivityLogService activityLog;
+    private final ReviewService reviewService;
 
     public RoundService(RoundMapper roundMapper, ChecklistMapper checklistMapper, TeamMapper teamMapper,
-                        AppUserMapper userMapper, ActivityLogService activityLog) {
+                        AppUserMapper userMapper, ActivityLogService activityLog, ReviewService reviewService) {
         this.roundMapper = roundMapper;
         this.checklistMapper = checklistMapper;
         this.teamMapper = teamMapper;
         this.userMapper = userMapper;
         this.activityLog = activityLog;
+        this.reviewService = reviewService;
     }
 
     // ---------- 조회 ----------
@@ -73,6 +75,12 @@ public class RoundService {
 
     public List<RoundItem> findItems(Long roundId) {
         return roundMapper.findItems(roundId);
+    }
+
+    /** 항목이 속한 회차 ID (없으면 null) */
+    public Long findItemRoundId(Long roundItemId) {
+        RoundItem item = roundMapper.findItem(roundItemId);
+        return item == null ? null : item.getRoundId();
     }
 
     public List<Team> findActiveTeams() {
@@ -300,6 +308,10 @@ public class RoundService {
             roundMapper.updateAssignment(item);
             activityLog.log(ActivityLogService.ROUND_ITEM_ASSIGN, "ROUND_ITEM", item.getRoundItemId(),
                     round.getLabel() + " #" + item.getSeqNo() + " " + diffs.get(i));
+        }
+        // 제외·회신불필요가 바뀌면 '제출 대상이 모두 모였는지'도 바뀔 수 있다
+        if (!changed.isEmpty()) {
+            reviewService.refreshStatus(roundId, actor);
         }
         return changed.size();
     }

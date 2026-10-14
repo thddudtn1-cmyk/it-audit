@@ -36,6 +36,16 @@ public interface RoundMapper {
     /** 제출 상태와 제출자·제출일시 */
     int updateSubmitStatus(RoundItem item);
 
+    /** 주관자 확인·반려 (제출 상태, 반려 사유, 검토자·검토일시) */
+    int updateReview(RoundItem item);
+
+    int updateRoundStatus(@Param("roundId") Long roundId, @Param("status") RoundStatus status,
+                          @Param("updatedBy") Long updatedBy, @Param("updatedAt") java.time.LocalDateTime updatedAt);
+
+    /** 검토중 → 감사부서 제출 (회차 잠금) */
+    int submitRound(@Param("roundId") Long roundId, @Param("submittedBy") Long submittedBy,
+                    @Param("submittedAt") java.time.LocalDateTime submittedAt);
+
     /** 배정 값(담당팀·담당자·사전요청자료·표본 수·회신불필요·제외) 수정 */
     int updateAssignment(RoundItem item);
 }
