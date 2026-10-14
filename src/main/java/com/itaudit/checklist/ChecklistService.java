@@ -190,6 +190,40 @@ public class ChecklistService {
                 "변경 전 " + before + " → 변경 후 " + describe(item));
     }
 
+    // ---------- 삭제 ----------
+
+    /**
+     * 선택한 항목 삭제. 한 건이라도 삭제할 수 없으면 아무것도 삭제하지 않는다.
+     * 회차에 쓰인 항목은 회차 이력이 끊어지므로 삭제할 수 없고 '사용' 해제로 뺀다.
+     * 삭제 내용은 활동 이력에 항목 내용과 함께 남긴다 (행은 물리 삭제되어 순번을 다시 쓸 수 있다).
+     */
+    @Transactional
+    public int deleteItems(int year, List<Long> itemIds, LoginUser actor) {
+        if (itemIds == null || itemIds.isEmpty()) {
+            throw new BusinessException("삭제할 항목을 선택하세요.");
+        }
+        List<ChecklistItem> targets = new ArrayList<>();
+        for (Long id : new java.util.LinkedHashSet<>(itemIds)) {
+            ChecklistItem item = id == null ? null : mapper.findById(id);
+            if (item == null || item.getApplyYear() != year) {
+                throw new BusinessException("선택한 항목을 찾을 수 없습니다. 목록을 새로 고친 뒤 다시 선택하세요.");
+            }
+            targets.add(item);
+        }
+        List<String> used = targets.stream().filter(ChecklistItem::isUsedInRounds)
+                .map(i -> "#" + i.getSeqNo()).toList();
+        if (!used.isEmpty()) {
+            throw new BusinessException("분기 회차에 쓰인 항목은 삭제할 수 없습니다: " + String.join(", ", used)
+                    + " (대신 항목을 수정해 '사용'을 해제하면 새 회차에서 빠집니다.)");
+        }
+        for (ChecklistItem item : targets) {
+            mapper.deleteById(item.getItemId());
+            activityLog.log(ActivityLogService.CHECKLIST_DELETE, "CHECKLIST_ITEM", item.getItemId(),
+                    year + "년 " + describe(item));
+        }
+        return targets.size();
+    }
+
     private static void apply(ChecklistItem item, ChecklistForm form) {
         item.setSeqNo(form.getSeqNo());
         item.setAuditArea(form.getAuditArea());

@@ -437,3 +437,8 @@ form.inline { display: inline; }
 .comment { padding: 10px 0; border-bottom: 1px solid var(--c-border); }
 .comment:last-child { border-bottom: none; }
 .comment__head { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; flex-wrap: wrap; }
+
+/* 체크리스트 삭제 */
+.col-check { width: 36px; text-align: center; }
+.button--danger { border-color: var(--c-error); color: var(--c-error); background: var(--c-surface); }
+.button--danger:not(:disabled):hover { background: var(--c-error); color: #fff; }

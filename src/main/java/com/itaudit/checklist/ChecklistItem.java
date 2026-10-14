@@ -19,6 +19,12 @@ public class ChecklistItem {
     private LocalDateTime createdAt;
     private Long updatedBy;
     private LocalDateTime updatedAt;
+    /** 이 항목으로 만든 회차 점검항목 수 (조회 시 계산). 0보다 크면 삭제할 수 없다 */
+    private int roundUseCount;
+
+    public boolean isUsedInRounds() {
+        return roundUseCount > 0;
+    }
 
     public boolean isActive() {
         return "Y".equals(useYn);
@@ -50,4 +56,6 @@ public class ChecklistItem {
     public void setUpdatedBy(Long updatedBy) { this.updatedBy = updatedBy; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public int getRoundUseCount() { return roundUseCount; }
+    public void setRoundUseCount(int roundUseCount) { this.roundUseCount = roundUseCount; }
 }

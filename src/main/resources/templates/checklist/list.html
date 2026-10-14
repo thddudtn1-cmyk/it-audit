@@ -38,13 +38,19 @@
             <a class="button" th:href="@{/checklist/upload(year=${year})}">엑셀 업로드</a>
             <a class="button" th:if="${totalCount > 0}" th:href="@{/checklist/export(year=${year})}">엑셀 내보내기</a>
             <a class="button" th:href="@{/checklist/items/new(year=${year})}">항목 추가</a>
+            <button type="submit" form="delete-form" class="button button--danger" id="delete-button" disabled
+                    th:if="${totalCount > 0}">선택 삭제</button>
         </span>
     </div>
 
+    <form id="delete-form" th:action="@{/checklist/delete}" method="post"
+          data-confirm="선택한 항목을 삭제합니다. 삭제한 항목은 되돌릴 수 없습니다. 계속할까요?">
+    <input type="hidden" name="year" th:value="${year}">
     <div class="table-wrap">
         <table class="table table--checklist">
             <thead>
             <tr>
+                <th class="col-check"><input type="checkbox" id="check-all" title="삭제할 수 있는 항목 전체 선택" aria-label="전체 선택"></th>
                 <th class="col-no">순번</th>
                 <th class="col-area">감사 영역</th>
                 <th class="col-item">감사 항목</th>
@@ -57,6 +63,12 @@
             </thead>
             <tbody>
             <tr th:each="r : ${rows}" th:with="i=${r.item}" th:classappend="${!i.active} ? 'row--inactive'">
+                <td class="col-check">
+                    <input type="checkbox" name="itemIds" th:value="${i.itemId}" class="row-check"
+                           th:disabled="${i.usedInRounds}"
+                           th:title="${i.usedInRounds} ? |분기 회차 ${i.roundUseCount}건에 쓰여 삭제할 수 없습니다 (사용 해제로 대체)| : '삭제 선택'"
+                           th:attr="aria-label=|순번 ${i.seqNo} 선택|">
+                </td>
                 <td class="num" th:text="${i.seqNo}">1</td>
                 <td th:if="${r.areaRowspan > 0}" th:rowspan="${r.areaRowspan}" class="cell--group" th:text="${i.auditArea.label}">영역</td>
                 <td th:if="${r.auditItemRowspan > 0}" th:rowspan="${r.auditItemRowspan}" class="cell--group" th:text="${i.auditItem}">항목</td>
@@ -70,7 +82,7 @@
                 </td>
             </tr>
             <tr th:if="${#lists.isEmpty(rows)}">
-                <td colspan="8" class="empty">
+                <td colspan="9" class="empty">
                     <span th:text="|${year}년 체크리스트가 없습니다.|"></span>
                     <a th:href="@{/checklist/upload(year=${year})}">② 체크리스트 엑셀을 올리거나</a>
                     다른 연도를 복사해 만드세요.
@@ -79,6 +91,7 @@
             </tbody>
         </table>
     </div>
+    </form>
 
     <section class="panel" th:if="${totalCount > 0}">
         <h3>새 연도 개정본 만들기</h3>
@@ -92,5 +105,6 @@
         <small class="muted">복사한 뒤 바뀐 항목만 수정하면 됩니다. 이미 항목이 있는 연도로는 복사할 수 없습니다.</small>
     </section>
 </main>
+<script th:src="@{/js/checklist.js}"></script>
 </body>
 </html>

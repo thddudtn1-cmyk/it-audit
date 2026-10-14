@@ -31,6 +31,8 @@ public interface ChecklistMapper {
 
     int deleteByYear(@Param("year") int year);
 
+    int deleteById(@Param("itemId") Long itemId);
+
     /** 해당 연도 항목을 쓰는 회차 점검항목 수 */
     int countUsedInRounds(@Param("year") int year);
 }

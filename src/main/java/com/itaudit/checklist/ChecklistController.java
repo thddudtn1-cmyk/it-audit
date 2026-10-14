@@ -150,6 +150,20 @@ public class ChecklistController {
         }
     }
 
+    // ---------- 삭제 ----------
+
+    @PostMapping("/delete")
+    public String delete(@RequestParam int year, @RequestParam(name = "itemIds", required = false) List<Long> itemIds,
+                         @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
+        try {
+            int count = service.deleteItems(year, itemIds, actor);
+            ra.addFlashAttribute("message", "체크리스트 항목 " + count + "건을 삭제했습니다.");
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/checklist?year=" + year;
+    }
+
     // ---------- 개별 등록·수정 ----------
 
     @GetMapping("/items/new")

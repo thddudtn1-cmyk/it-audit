@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -218,5 +219,89 @@ class ChecklistControllerTest {
                 .andExpect(content().string(Matchers.containsString("2030년 체크리스트가 없습니다")));
         mvc.perform(get("/checklist/upload").with(user(lead))).andExpect(status().isOk());
         mvc.perform(get("/checklist/items/new").param("year", "2030").with(user(lead))).andExpect(status().isOk());
+    }
+
+    // ---------- 삭제 ----------
+
+    @Autowired com.itaudit.round.RoundService roundService;
+
+    @Test
+    void 선택한_항목을_삭제하고_내용이_이력에_남으며_순번을_다시_쓸_수_있다() throws Exception {
+        uploadAndConfirm(2026);
+        Long a = mapper.findBySeqNo(2026, 1).getItemId();
+        Long b = mapper.findBySeqNo(2026, 2).getItemId();
+
+        mvc.perform(post("/checklist/delete").param("year", "2026").param("itemIds", a.toString(), b.toString())
+                        .with(user(lead)).with(csrf()))
+                .andExpect(redirectedUrl("/checklist?year=2026"))
+                .andExpect(flash().attribute("message", "체크리스트 항목 2건을 삭제했습니다."));
+
+        assertThat(mapper.countByYear(2026)).isEqualTo(41);
+        assertThat(mapper.findById(a)).isNull();
+        assertThat(mapper.findBySeqNo(2026, 3)).as("선택하지 않은 항목은 그대로").isNotNull();
+        assertThat(activityLogMapper.findByAction(ActivityLogService.CHECKLIST_DELETE)).hasSize(2)
+                .anyMatch(l -> l.getDetail().contains("#1 ") && l.getDetail().contains("사고 관리 및 보고"));
+
+        // 지운 순번은 다시 등록할 수 있다
+        mvc.perform(post("/checklist/items").param("year", "2026").with(user(lead)).with(csrf())
+                        .param("seqNo", "1").param("auditArea", "IT_OPS").param("auditItem", "새 항목")
+                        .param("itemDetail", "상세").param("auditPeriod", "Q1").param("active", "true"))
+                .andExpect(redirectedUrl("/checklist?year=2026"));
+        assertThat(mapper.findBySeqNo(2026, 1).getAuditItem()).isEqualTo("새 항목");
+    }
+
+    @Test
+    void 분기_회차에_쓰인_항목은_삭제할_수_없고_아무것도_지우지_않는다() throws Exception {
+        uploadAndConfirm(2026);
+        com.itaudit.round.RoundCreateForm form = new com.itaudit.round.RoundCreateForm();
+        form.setYear(2026);
+        form.setQuarter(3);
+        roundService.create(form, lead);
+        Long used = mapper.findBySeqNo(2026, 23).getItemId();
+        Long unused = mapper.findBySeqNo(2026, 1).getItemId();
+
+        mvc.perform(post("/checklist/delete").param("year", "2026").param("itemIds", unused.toString(), used.toString())
+                        .with(user(lead)).with(csrf()))
+                .andExpect(flash().attribute("errorMessage", Matchers.containsString("분기 회차에 쓰인 항목은 삭제할 수 없습니다: #23")));
+        assertThat(mapper.findById(unused)).as("함께 선택한 미사용 항목도 지우지 않음").isNotNull();
+        assertThat(mapper.findById(used)).isNotNull();
+
+        // 화면: 쓰인 항목의 체크박스는 비활성
+        String html = mvc.perform(get("/checklist").param("year", "2026").with(user(lead)))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("name=\"itemIds\"").contains("value=\"" + used + "\"")
+                .contains("분기 회차 1건에 쓰여 삭제할 수 없습니다").contains("선택 삭제");
+        assertThat(html).containsPattern("name=\"itemIds\" value=\"" + used + "\"[^>]*disabled");
+        assertThat(html).doesNotContainPattern("name=\"itemIds\" value=\"" + unused + "\"[^>]*disabled");
+    }
+
+    @Test
+    void 선택이_없거나_다른_연도_항목이면_거부한다() throws Exception {
+        uploadAndConfirm(2026);
+        mvc.perform(post("/checklist/delete").param("year", "2026").with(user(lead)).with(csrf()))
+                .andExpect(flash().attribute("errorMessage", "삭제할 항목을 선택하세요."));
+        Long id = mapper.findBySeqNo(2026, 1).getItemId();
+        mvc.perform(post("/checklist/delete").param("year", "2027").param("itemIds", id.toString())
+                        .with(user(lead)).with(csrf()))
+                .andExpect(flash().attribute("errorMessage", Matchers.containsString("선택한 항목을 찾을 수 없습니다")));
+        mvc.perform(post("/checklist/delete").param("year", "2026").param("itemIds", "999999")
+                        .with(user(lead)).with(csrf()))
+                .andExpect(flash().attribute("errorMessage", Matchers.containsString("선택한 항목을 찾을 수 없습니다")));
+        assertThat(mapper.countByYear(2026)).isEqualTo(43);
+    }
+
+    @Test
+    void 삭제는_관리자와_주관자만_할_수_있다() throws Exception {
+        uploadAndConfirm(2026);
+        Long id = mapper.findBySeqNo(2026, 1).getItemId();
+        for (Role role : new Role[]{Role.INSPECTOR, Role.AUDIT_DEPT, Role.VIEWER}) {
+            LoginUser u = testUsers.user("del-" + role.name().toLowerCase(), role);
+            mvc.perform(post("/checklist/delete").param("year", "2026").param("itemIds", id.toString())
+                    .with(user(u)).with(csrf())).andExpect(status().isForbidden());
+        }
+        LoginUser admin = testUsers.user("del-admin", Role.ADMIN);
+        mvc.perform(post("/checklist/delete").param("year", "2026").param("itemIds", id.toString())
+                .with(user(admin)).with(csrf())).andExpect(redirectedUrl("/checklist?year=2026"));
+        assertThat(mapper.findById(id)).isNull();
     }
 }
