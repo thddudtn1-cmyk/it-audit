@@ -34,3 +34,25 @@ java -jar target/it-audit-0.1.0-SNAPSHOT.jar   # http://localhost:8080
 - [x] F-10 이력 조회: 점검 입력 화면에 지난 회차 결과·관련 개선사항, 체크리스트 항목별 전체 이력 화면
 - [ ] F-11 감사 로그
 - [ ] F-12 코멘트
+
+## Render 배포 (시연용 호스팅)
+
+저장소 루트의 `render.yaml`(Blueprint)과 `Dockerfile`로 배포한다. Render 는 Java 를 기본 제공하지 않아 Docker 이미지를 쓴다.
+온프레미스 운영(실행 JAR + systemd)과는 별개이며, 같은 JAR 을 컨테이너로 감싼 것이다.
+
+1. Render 대시보드 → **New → Blueprint** → 이 GitHub 저장소 선택 → `render.yaml` 적용
+2. 배포가 끝나면 서비스 **Environment** 에서 `APP_INIT_ADMIN_PASSWORD`(자동 생성) 값을 확인해 `admin` 으로 로그인하고, 첫 로그인 때 비밀번호를 바꾼다.
+3. 관리 화면에서 사용자·담당팀을 등록한다.
+
+| 환경변수 | 기본값 | 설명 |
+| --- | --- | --- |
+| `PORT` | 8080 | Render 가 지정 |
+| `APP_DATA_DIR` | `./data` (Render: `/var/data`) | DB(`db/`)와 증적 파일(`files/`) 위치. **영구 디스크**를 마운트한다 |
+| `APP_INIT_ADMIN_PASSWORD` | `admin1234!` | 최초 관리자 비밀번호 (Render: 자동 생성) |
+| `DEMO_LOGIN_ENABLED` | `true` (Render: `false`) | 역할 선택 데모 로그인. 인터넷 공개 서버에서는 끈다 |
+| `COOKIE_SECURE` | `false` (Render: `true`) | 세션 쿠키를 HTTPS 로만 전송 |
+
+주의
+- H2 파일 DB 라서 **영구 디스크가 필요**하고, 디스크는 유료 플랜에서만 붙는다. 무료 플랜에서는 재배포·유휴 종료 때 DB 와 첨부파일이 사라진다.
+- 영구 디스크를 쓰면 인스턴스를 1개로 고정해야 한다 (DB 파일을 여러 인스턴스가 같이 쓸 수 없다).
+- 시연이 필요할 때만 `DEMO_LOGIN_ENABLED=true` 로 바꾸고 끝나면 다시 끈다. 켜면 URL 을 아는 누구나 관리자로 들어갈 수 있다.

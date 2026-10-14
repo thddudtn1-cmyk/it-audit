@@ -1,0 +1,9 @@
+.git
+target
+data
+data-ui-preview
+docs
+*.log
+.idea
+.vscode
+.DS_Store

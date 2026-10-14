@@ -17,12 +17,19 @@ spring:
       max-request-size: 200MB
 
 server:
-  port: 8080
+  # Render 등 PaaS 는 PORT 환경변수로 포트를 지정한다
+  port: ${PORT:8080}
+  # 종료 신호(SIGTERM)를 받으면 진행 중 요청을 마치고 내려가, H2 파일이 깨지지 않게 한다
+  shutdown: graceful
+  # 리버스 프록시(Render 의 HTTPS 종단) 뒤에서 원래 요청의 스킴·호스트를 쓰도록
+  forward-headers-strategy: framework
   servlet:
     session:
       timeout: 30m
       cookie:
         http-only: true
+        # HTTPS 로만 쿠키를 보낸다. 로컬 HTTP 개발에서는 false (Render 에서는 true 로 설정)
+        secure: ${COOKIE_SECURE:false}
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
@@ -34,11 +41,12 @@ mybatis:
     jdbc-type-for-null: NULL
 
 app:
-  data-dir: ./data
+  # DB(data-dir/db)와 증적 파일(data-dir/files) 위치. Render 에서는 영구 디스크 경로(예: /var/data)
+  data-dir: ${APP_DATA_DIR:./data}
   # 시연용 역할 선택 로그인. 로그인 화면에서 역할을 고르면 데모 계정으로 바로 들어간다.
-  # 사내 도입·운영 시에는 반드시 false 로 끈다 (실행 시 --app.demo-login.enabled=false).
+  # 인터넷에 공개되는 서버·사내 운영에서는 반드시 false 로 끈다 (DEMO_LOGIN_ENABLED=false).
   demo-login:
-    enabled: true
+    enabled: ${DEMO_LOGIN_ENABLED:true}
   # 최초 기동 시 관리자 계정이 하나도 없으면 생성한다. 첫 로그인 후 비밀번호 변경이 강제된다.
   init-admin:
     login-id: admin
