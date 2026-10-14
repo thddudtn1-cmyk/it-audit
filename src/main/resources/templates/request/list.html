@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('사전요청자료')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2>적정성 점검 사전요청자료</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <div class="panel empty" th:if="${round == null}">감사부서에 제출된 회차가 없습니다.</div>
+
+    <th:block th:if="${round != null}">
+        <form method="get" th:action="@{/requests}" class="filter-bar">
+            <label>회차
+                <select name="roundId" onchange="this.form.submit()">
+                    <option th:each="r : ${rounds}" th:value="${r.roundId}" th:selected="${r.roundId == round.roundId}"
+                            th:text="|${r.label} (${r.status.label})|">2026년 3분기</option>
+                </select>
+            </label>
+            <noscript><button type="submit" class="button">조회</button></noscript>
+        </form>
+
+        <div class="summary">
+            <span><strong>요청</strong> <span th:text="|${#lists.size(requests)}건|">0건</span></span>
+            <span><strong>판정 대기</strong> <span th:text="|${openCount}건|">0건</span></span>
+            <span><strong>미흡 확정</strong> <span th:text="|${findingCount}건|">0건</span></span>
+            <span><strong>회차 상태</strong> <span th:text="${round.status.label}">감사부서 제출</span></span>
+            <span class="toolbar__actions" sec:authorize="hasRole('AUDIT_DEPT')" th:if="${round.status.name() == 'SUBMITTED'}">
+                <a class="button" th:href="@{/rounds/{id}(id=${round.roundId})}">총괄표 보기</a>
+                <a class="button button--primary" th:href="@{/requests/new(roundId=${round.roundId})}">요청 추가</a>
+                <form th:action="@{/requests/rounds/{id}/complete(id=${round.roundId})}" method="post" class="inline">
+                    <button type="submit" class="button" th:disabled="${openCount > 0}"
+                            th:title="${openCount > 0} ? '모든 요청을 판정해야 완료할 수 있습니다.' : ''">적정성 점검 완료</button>
+                </form>
+            </span>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table table--checklist">
+                <thead>
+                <tr>
+                    <th class="col-no">No</th>
+                    <th class="col-area">감사 영역</th>
+                    <th class="col-item">평가항목</th>
+                    <th>점검방식</th>
+                    <th class="col-material">사전요청자료</th>
+                    <th class="col-material">비고</th>
+                    <th class="col-team">담당자</th>
+                    <th class="col-period">제출 파일</th>
+                    <th class="col-period">제출일</th>
+                    <th class="col-exclude">상태 / 미흡 확정</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r, s : ${requests}">
+                    <td class="num" th:text="${s.count}" th:title="|체크리스트 순번 ${r.seqNo}|">1</td>
+                    <td th:text="${r.auditArea.label}">영역</td>
+                    <td th:text="${r.auditItem}">항목</td>
+                    <td class="pre small" th:text="${r.itemDetail}">상세</td>
+                    <td class="pre small">
+                        <span th:text="${r.requestMaterial}">자료</span>
+                        <span class="tag" th:if="${r.sampleSize != null}" th:text="|표본 ${r.sampleSize}개|"></span>
+                    </td>
+                    <td class="pre small" th:text="${r.remark}">비고</td>
+                    <td th:text="${r.assigneeName} ?: '미배정'">담당자</td>
+                    <td class="num" th:text="${r.evidenceCount > 0} ? |${r.evidenceCount}건| : '-'">0</td>
+                    <td th:text="${r.submittedAt != null} ? ${#temporals.format(r.submittedAt, 'yyyy-MM-dd')} : '-'">-</td>
+                    <td>
+                        <span th:replace="~{request/fragments :: status(${r})}"></span>
+                        <div><a class="small" th:href="@{/requests/{id}(id=${r.requestId})}">상세</a></div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(requests)}">
+                    <td colspan="10" class="empty">아직 요청한 자료가 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </th:block>
+</main>
+</body>
+</html>

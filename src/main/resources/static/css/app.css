@@ -235,3 +235,10 @@ form.inline { display: inline; }
 .reject-box summary { cursor: pointer; color: var(--c-error); }
 .reject-box textarea { width: 180px; margin: 4px 0; padding: 4px 6px; border: 1px solid var(--c-border); border-radius: 4px; font: inherit; }
 .error { color: var(--c-error); }
+
+/* 사전요청자료 (F-06) */
+.req--requested { background: var(--c-warn-bg); }
+.req--submitted { background: var(--c-info-bg); color: var(--c-primary); }
+.req--reviewed { background: #e7f6ec; color: #1e6b3a; }
+.row--highlight td { background: #fffbeb; }
+.form .form-row .checkbox { font-weight: normal; margin-bottom: 4px; }

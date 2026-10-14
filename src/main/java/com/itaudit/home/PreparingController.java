@@ -17,11 +17,6 @@ public class PreparingController {
         return preparing(model, Menu.DASHBOARD);
     }
 
-    @GetMapping("/requests")
-    public String requests(Model model) {
-        return preparing(model, Menu.REQUESTS);
-    }
-
     @GetMapping("/improvements")
     public String improvements(Model model) {
         return preparing(model, Menu.IMPROVEMENTS);

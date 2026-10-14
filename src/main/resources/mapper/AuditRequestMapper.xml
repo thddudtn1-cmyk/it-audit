@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.request.AuditRequestMapper">
+
+    <sql id="select">
+        SELECT q.request_id, q.round_item_id, q.request_material, q.sample_size, q.remark, q.status, q.dept_comment,
+               q.finding_yn, q.confirmed_result, q.finding_detail, q.requested_by, q.requested_at,
+               q.submitted_by, q.submitted_at, q.reviewed_by, q.reviewed_at, q.updated_by, q.updated_at,
+               i.round_id, r.round_year, r.quarter, r.status AS round_status,
+               c.seq_no, c.audit_area, c.audit_item, c.item_detail, c.audit_period,
+               i.team_code, t.team_name, i.assignee_id, u.user_name AS assignee_name,
+               i.inspection_result, i.inspection_detail, i.action_plan, i.planned_date,
+               (SELECT COUNT(*) FROM evidence e
+                 WHERE e.owner_type = 'AUDIT_REQUEST' AND e.owner_id = q.request_id AND e.deleted_yn = 'N') AS evidence_count
+          FROM audit_request q
+          JOIN round_item i ON i.round_item_id = q.round_item_id
+          JOIN audit_round r ON r.round_id = i.round_id
+          JOIN checklist_item c ON c.item_id = i.checklist_item_id
+          LEFT JOIN team t ON t.team_code = i.team_code
+          LEFT JOIN app_user u ON u.user_id = i.assignee_id
+    </sql>
+
+    <select id="findByRound" resultType="com.itaudit.request.AuditRequest">
+        <include refid="select"/>
+         WHERE i.round_id = #{roundId}
+         ORDER BY c.seq_no
+    </select>
+
+    <select id="findByAssignee" resultType="com.itaudit.request.AuditRequest">
+        <include refid="select"/>
+         WHERE i.assignee_id = #{userId}
+         ORDER BY r.round_year DESC, r.quarter DESC, c.seq_no
+    </select>
+
+    <select id="findById" resultType="com.itaudit.request.AuditRequest">
+        <include refid="select"/>
+         WHERE q.request_id = #{requestId}
+    </select>
+
+    <select id="findByRoundItem" resultType="com.itaudit.request.AuditRequest">
+        <include refid="select"/>
+         WHERE q.round_item_id = #{roundItemId}
+    </select>
+
+    <select id="findConfirmedFindings" resultType="com.itaudit.request.AuditRequest">
+        <include refid="select"/>
+         WHERE q.finding_yn = 'Y'
+        <if test="roundId != null">AND i.round_id = #{roundId}</if>
+         ORDER BY r.round_year DESC, r.quarter DESC, c.seq_no
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="requestId" keyColumn="request_id">
+        INSERT INTO audit_request (round_item_id, request_material, sample_size, status, requested_by, requested_at,
+                                   updated_by, updated_at)
+        VALUES (#{roundItemId}, #{requestMaterial}, #{sampleSize}, #{status}, #{requestedBy}, #{requestedAt},
+                #{updatedBy}, #{updatedAt})
+    </insert>
+
+    <update id="updateSubmission">
+        UPDATE audit_request
+           SET remark = #{remark},
+               status = #{status},
+               submitted_by = #{submittedBy},
+               submitted_at = #{submittedAt},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE request_id = #{requestId}
+    </update>
+
+    <update id="updateReview">
+        UPDATE audit_request
+           SET status = #{status},
+               dept_comment = #{deptComment},
+               finding_yn = #{findingYn},
+               confirmed_result = #{confirmedResult},
+               finding_detail = #{findingDetail},
+               reviewed_by = #{reviewedBy},
+               reviewed_at = #{reviewedAt},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE request_id = #{requestId}
+    </update>
+
+    <update id="completeRound">
+        UPDATE audit_round
+           SET status = 'DONE', completed_by = #{completedBy}, completed_at = #{completedAt},
+               updated_by = #{completedBy}, updated_at = #{completedAt}
+         WHERE round_id = #{roundId} AND status = 'SUBMITTED'
+    </update>
+</mapper>

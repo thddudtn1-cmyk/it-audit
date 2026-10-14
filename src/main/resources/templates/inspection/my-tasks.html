@@ -65,7 +65,30 @@
             </table>
         </div>
     </section>
-    <p class="small muted">받은 사전요청자료(F-06)와 내 개선사항(F-07)은 해당 기능을 만들 때 이 화면에 추가됩니다.</p>
+    <section class="section">
+        <h3 th:text="|받은 사전요청자료 ${#lists.size(requests)}건|">받은 사전요청자료</h3>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>사전요청자료</th><th>요청일</th><th class="col-act"></th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${requests}">
+                    <td th:text="${r.roundLabel}">2026년 3분기</td>
+                    <td class="num" th:text="${r.seqNo}">8</td>
+                    <td th:text="${r.auditItem}">항목</td>
+                    <td class="pre small">
+                        <span th:text="${r.requestMaterial}">자료</span>
+                        <span class="tag" th:if="${r.sampleSize != null}" th:text="|표본 ${r.sampleSize}개|"></span>
+                        <div class="small error" th:if="${r.deptComment != null}" th:text="|보완 요청: ${r.deptComment}|"></div>
+                    </td>
+                    <td th:text="${#temporals.format(r.requestedAt, 'yyyy-MM-dd')}">-</td>
+                    <td><a class="button" th:href="@{/requests/{id}(id=${r.requestId})}">제출</a></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(requests)}"><td colspan="6" class="empty">제출할 사전요청자료가 없습니다.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <!-- 내 개선사항(F-07)은 개선사항 기능에서 추가 -->
 </main>
 </body>
 </html>

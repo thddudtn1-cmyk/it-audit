@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|${req.roundLabel} #${req.seqNo} 사전요청자료|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <div class="page-title">
+        <h2 th:text="|${req.roundLabel} · ${req.auditItem}|">사전요청자료</h2>
+        <span th:replace="~{request/fragments :: status(${req})}"></span>
+    </div>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="alert alert--error" th:if="${req.status.name() == 'REQUESTED' and req.deptComment != null}"
+         th:text="|감사부서 보완 요청: ${req.deptComment}|">보완 요청</div>
+
+    <section class="panel">
+        <dl class="info-grid">
+            <dt>감사 영역</dt><dd th:text="${req.auditArea.label}">영역</dd>
+            <dt>평가항목</dt><dd th:text="${req.auditItem}">항목</dd>
+            <dt>점검방식</dt><dd class="pre" th:text="${req.itemDetail}">상세</dd>
+            <dt>담당</dt><dd th:text="|${req.teamName ?: '-'} / ${req.assigneeName ?: '미배정'}|">담당</dd>
+            <dt>사전요청자료</dt>
+            <dd class="pre"><strong th:text="${req.requestMaterial}">요청</strong>
+                <span class="tag" th:if="${req.sampleSize != null}" th:text="|표본 ${req.sampleSize}개|"></span></dd>
+            <dt>요청일</dt><dd th:text="${#temporals.format(req.requestedAt, 'yyyy-MM-dd HH:mm')}">-</dd>
+        </dl>
+    </section>
+
+    <!-- 담당자 점검 입력 (③) 참고 -->
+    <section class="panel">
+        <h3>총괄표 점검 내용 (담당자 입력)</h3>
+        <dl class="info-grid">
+            <dt>점검결과</dt><dd><span th:replace="~{inspection/form :: resultTag(${req.inspectionResult})}"></span></dd>
+            <dt>점검 내용 상세</dt><dd class="pre" th:text="${req.inspectionDetail} ?: '-'">내용</dd>
+            <dt>조치내용</dt><dd class="pre"><span th:text="${req.actionPlan} ?: '-'"></span>
+                <span th:if="${req.plannedDate}" th:text="|(개선 예정일 ${req.plannedDate})|"></span></dd>
+            <dt>점검 증적</dt>
+            <dd>
+                <span th:each="e, s : ${itemEvidences}">
+                    <a th:href="@{/evidence/{id}(id=${e.evidenceId})}" th:text="${e.originalName}">파일</a><span th:unless="${s.last}">, </span>
+                </span>
+                <span th:if="${#lists.isEmpty(itemEvidences)}" class="muted">없음</span>
+            </dd>
+        </dl>
+    </section>
+
+    <!-- 담당자 제출 -->
+    <form th:action="@{/requests/{id}/submission(id=${req.requestId})}" method="post" enctype="multipart/form-data" class="form panel">
+        <h3>제출 자료</h3>
+        <fieldset th:disabled="${!canSubmit}">
+            <label>비고
+                <textarea name="remark" rows="3" maxlength="1000" th:text="${remark}"
+                          placeholder="예: 26년 4분기 내 조치"></textarea>
+            </label>
+            <div class="form-row">
+                <span class="form-row__label">제출 파일</span>
+                <ul class="file-list">
+                    <li th:each="e : ${evidences}">
+                        <a th:href="@{/evidence/{id}(id=${e.evidenceId})}" th:text="${e.originalName}">파일</a>
+                        <span class="muted small" th:text="|${e.sizeLabel} · ${e.uploaderName} · ${#temporals.format(e.uploadedAt, 'MM-dd HH:mm')}|"></span>
+                        <button type="submit" class="link-button small" th:if="${canSubmit}" th:attr="form=|delete-${e.evidenceId}|">삭제</button>
+                    </li>
+                    <li th:if="${#lists.isEmpty(evidences)}" class="muted">제출한 파일이 없습니다.</li>
+                </ul>
+                <input type="file" name="files" multiple th:if="${canSubmit}" accept=".pdf,.xlsx,.docx,.png,.jpg,.jpeg,.zip,.txt">
+            </div>
+        </fieldset>
+        <p class="small muted" th:if="${!canSubmit and loginUser.role.name() == 'INSPECTOR'}" th:text="${submitBlockReason}"></p>
+        <p class="small muted" th:if="${req.submittedAt != null}" th:text="|제출일 ${#temporals.format(req.submittedAt, 'yyyy-MM-dd HH:mm')}|"></p>
+        <div class="form__actions" th:if="${canSubmit}">
+            <button type="submit" name="action" value="save" class="button">임시저장</button>
+            <button type="submit" name="action" value="submit" class="button button--primary">제출</button>
+        </div>
+    </form>
+    <form th:each="e : ${evidences}" th:if="${canSubmit}" th:id="|delete-${e.evidenceId}|" method="post"
+          th:action="@{/evidence/{id}/delete(id=${e.evidenceId})}" hidden>
+        <input type="hidden" name="returnUrl" th:value="|/requests/${req.requestId}|">
+    </form>
+
+    <!-- 감사부서 판정 -->
+    <section class="panel" th:if="${req.findingYn != null and !canReview}">
+        <h3>판정 결과</h3>
+        <dl class="info-grid">
+            <dt>판정</dt><dd><span th:replace="~{request/fragments :: status(${req})}"></span></dd>
+            <dt th:if="${req.findingDetail}">미흡 내용</dt><dd th:if="${req.findingDetail}" class="pre" th:text="${req.findingDetail}"></dd>
+            <dt th:if="${req.deptComment}">검토 의견</dt><dd th:if="${req.deptComment}" class="pre" th:text="${req.deptComment}"></dd>
+        </dl>
+    </section>
+    <form th:if="${canReview}" th:object="${reviewForm}" th:action="@{/requests/{id}/review(id=${req.requestId})}"
+          method="post" class="form panel">
+        <h3>감사부서 판정</h3>
+        <div class="form-row">
+            <label class="checkbox"><input type="radio" th:field="*{decision}" value="FINDING" required> 미흡 확정 (개선사항 관리대장 등록 대상)</label>
+            <label class="checkbox"><input type="radio" th:field="*{decision}" value="NO_FINDING"> 이상 없음</label>
+            <label class="checkbox"><input type="radio" th:field="*{decision}" value="SUPPLEMENT"> 보완 요청 (담당자에게 다시 요청)</label>
+        </div>
+        <label>확정 점검결과 <small class="muted">미흡 확정 시 필수</small>
+            <select th:field="*{confirmedResult}">
+                <option value="">선택</option>
+                <option th:each="r : ${findingResults}" th:value="${r}" th:text="|${r.label} — ${r.description}|">미흡</option>
+            </select>
+        </label>
+        <label>미흡 내용 <small class="muted">미흡 확정 시 필수 · 개선사항의 '점검 내용 상세'로 이어집니다</small>
+            <textarea th:field="*{findingDetail}" rows="3" maxlength="2000"></textarea>
+        </label>
+        <label>검토 의견 <small class="muted">보완 요청 시 필수</small>
+            <textarea th:field="*{deptComment}" rows="2" maxlength="1000"></textarea>
+        </label>
+        <div class="form__actions">
+            <a class="button" th:href="@{/requests(roundId=${req.roundId})}">목록</a>
+            <button type="submit" class="button button--primary">판정 저장</button>
+        </div>
+    </form>
+    <div class="form__actions" th:unless="${canReview}">
+        <a class="button" th:href="${loginUser.role.name() == 'INSPECTOR'} ? @{/requests} : @{/requests(roundId=${req.roundId})}">목록</a>
+    </div>
+</main>
+</body>
+</html>

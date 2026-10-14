@@ -17,6 +17,8 @@ import com.itaudit.auth.LoginUser;
 import com.itaudit.common.BusinessException;
 import com.itaudit.evidence.EvidenceOwnerType;
 import com.itaudit.evidence.EvidenceService;
+import com.itaudit.request.AuditRequestService;
+import com.itaudit.request.RequestStatus;
 import com.itaudit.round.RoundItem;
 
 /** 내 할 일, 점검 입력 (항목 상세) */
@@ -25,10 +27,13 @@ public class InspectionController {
 
     private final InspectionService service;
     private final EvidenceService evidenceService;
+    private final AuditRequestService requestService;
 
-    public InspectionController(InspectionService service, EvidenceService evidenceService) {
+    public InspectionController(InspectionService service, EvidenceService evidenceService,
+                                AuditRequestService requestService) {
         this.service = service;
         this.evidenceService = evidenceService;
+        this.requestService = requestService;
     }
 
     @GetMapping("/my-tasks")
@@ -37,6 +42,8 @@ public class InspectionController {
         // 회신불필요 항목은 입력 대상이 아니므로 '입력 필요'에서 뺀다
         model.addAttribute("pending", items.stream().filter(i -> i.isInputOpen() && !i.isNoReply()).toList());
         model.addAttribute("done", items.stream().filter(i -> !i.isInputOpen() || i.isNoReply()).toList());
+        model.addAttribute("requests", requestService.findMine(user).stream()
+                .filter(r -> r.getStatus() == RequestStatus.REQUESTED).toList());
         return "inspection/my-tasks";
     }
 

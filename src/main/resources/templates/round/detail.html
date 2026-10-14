@@ -30,6 +30,10 @@
     </div>
     <div class="alert alert--info" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable and notReadyReason != null}"
          th:text="|감사부서 제출 전 확인: ${notReadyReason}|">안내</div>
+    <div class="toolbar" sec:authorize="hasAnyRole('AUDIT_DEPT','AUDIT_LEAD')" th:if="${round.status.visibleToAuditDept}">
+        <span></span>
+        <a class="button" th:href="@{/requests(roundId=${round.roundId})}">사전요청자료 보기</a>
+    </div>
     <div class="alert alert--info" th:if="${round.submittedAt != null}"
          th:text="|${#temporals.format(round.submittedAt, 'yyyy-MM-dd HH:mm')} 감사부서에 제출되어 잠긴 회차입니다.|">잠금</div>
 

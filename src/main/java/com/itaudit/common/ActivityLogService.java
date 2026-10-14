@@ -35,6 +35,11 @@ public class ActivityLogService {
     public static final String ROUND_ITEM_CONFIRM = "ROUND_ITEM_CONFIRM";
     public static final String ROUND_ITEM_CONFIRM_CANCEL = "ROUND_ITEM_CONFIRM_CANCEL";
     public static final String ROUND_ITEM_REJECT = "ROUND_ITEM_REJECT";
+    public static final String REQUEST_CREATE = "REQUEST_CREATE";
+    public static final String REQUEST_SAVE = "REQUEST_SAVE";
+    public static final String REQUEST_SUBMIT = "REQUEST_SUBMIT";
+    public static final String REQUEST_REVIEW = "REQUEST_REVIEW";
+    public static final String ROUND_DONE = "ROUND_DONE";
     public static final String INSPECTION_SAVE = "INSPECTION_SAVE";
     public static final String INSPECTION_SUBMIT = "INSPECTION_SUBMIT";
     public static final String EVIDENCE_UPLOAD = "EVIDENCE_UPLOAD";
