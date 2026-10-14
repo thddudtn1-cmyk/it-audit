@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 점검결과 4단계 표시 -->
+<th:block th:fragment="resultTag(result)">
+    <span th:if="${result != null}" class="result" th:classappend="|result--${result.name().toLowerCase()}|"
+          th:text="${result.label}" th:title="${result.description}">정상</span>
+    <span th:if="${result == null}" class="muted">-</span>
+</th:block>
+
+<!-- 개선예정일 경과·임박 표시 -->
+<th:block th:fragment="due(m)">
+    <span th:if="${m.overdue}" class="tag tag--danger" th:text="|${m.overdueDays}일 경과|">경과</span>
+    <span th:if="${m.dueSoon}" class="tag tag--warn" th:text="|D-${m.daysLeft}|">D-3</span>
+</th:block>
+</body>
+</html>

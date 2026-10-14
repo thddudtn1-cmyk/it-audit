@@ -104,7 +104,7 @@
                 <td th:text="${h.assigneeName} ?: '-'">담당자</td>
                 <td>
                     <span th:if="${h.excluded}" class="tag" th:title="${h.excludeReason}">제외</span>
-                    <span th:unless="${h.excluded}" th:replace="~{inspection/form :: resultTag(${h.inspectionResult})}"></span>
+                    <span th:unless="${h.excluded}" th:replace="~{fragments/common :: resultTag(${h.inspectionResult})}"></span>
                 </td>
                 <td class="pre small" th:text="${h.inspectionDetail}">내용</td>
                 <td class="pre small"><span th:text="${h.actionPlan}"></span>
@@ -116,12 +116,6 @@
     </section>
 </main>
 
-<!-- 점검결과 표시 조각 (다른 화면에서도 사용) -->
-<th:block th:fragment="resultTag(result)">
-    <span th:if="${result != null}" class="result" th:classappend="|result--${result.name().toLowerCase()}|"
-          th:text="${result.label}" th:title="${result.description}">정상</span>
-    <span th:if="${result == null}" class="muted">-</span>
-</th:block>
 
 <script th:src="@{/js/inspection.js}"></script>
 </body>

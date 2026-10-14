@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${form.kind.label} + ' 등록')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container" th:with="rec=${form.kind.name() == 'RECOMMENDATION'}">
+    <h2 th:text="|${form.kind.label} 등록|">등록</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <!-- 권고사항: 회차 고르기 -->
+    <form th:if="${rec}" method="get" th:action="@{/improvements/recommendations/new}" class="filter-bar">
+        <label>회차
+            <select name="roundId" onchange="this.form.submit()">
+                <option value="">선택</option>
+                <option th:each="r : ${rounds}" th:value="${r.roundId}" th:text="|${r.label} (${r.status.label})|"
+                        th:selected="${r.roundId == form.roundId}">2026년 3분기</option>
+            </select>
+        </label>
+        <noscript><button type="submit" class="button">선택</button></noscript>
+    </form>
+
+    <form th:if="${!rec or roundItems != null}" th:object="${form}" method="post" class="form panel"
+          th:action="${rec} ? @{/improvements/recommendations} : @{/improvements}">
+        <input type="hidden" th:field="*{roundId}">
+
+        <!-- 개선사항: 선택한 미흡 확정 건 -->
+        <div class="form-row" th:unless="${rec}">
+            <span class="form-row__label">연결 항목 (미흡 확정)</span>
+            <ul class="file-list">
+                <li th:each="f : ${findings}">
+                    <input type="hidden" name="roundItemIds" th:value="${f.roundItemId}">
+                    <strong th:text="|${f.roundLabel} #${f.seqNo} ${f.auditItem}|">항목</strong>
+                    <span th:replace="~{fragments/common :: resultTag(${f.confirmedResult})}"></span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 권고사항: 대상 항목 고르기 -->
+        <div class="form-row" th:if="${rec}">
+            <span class="form-row__label">권고 대상 항목</span>
+            <div class="check-list">
+                <label th:each="i : ${roundItems}" class="checkbox">
+                    <input type="checkbox" name="roundItemIds" th:value="${i.roundItemId}"
+                           th:checked="${#lists.contains(form.roundItemIds, i.roundItemId)}">
+                    <span th:text="|#${i.seqNo} ${i.auditItem} — ${#strings.abbreviate(i.itemDetail, 60)}|">항목</span>
+                </label>
+            </div>
+        </div>
+
+        <th:block th:replace="~{improvement/fields :: owner}"></th:block>
+
+        <label th:unless="${rec}">점검 결과 (확정값)
+            <select th:field="*{inspectionResult}" required>
+                <option th:each="r : ${findingResults}" th:value="${r}" th:text="${r.label}">미흡</option>
+            </select>
+        </label>
+        <label th:text="${rec} ? '상세 내용' : '점검 내용 상세'">내용</label>
+        <textarea th:field="*{detail}" rows="4" maxlength="4000" required class="input--block"></textarea>
+        <label>개선 방안 <small class="muted" th:unless="${rec}">④ 비고 또는 ③ 조치내용을 기본값으로 가져왔습니다</small>
+            <textarea th:field="*{improvementPlan}" rows="3" maxlength="2000"></textarea>
+        </label>
+        <label>개선예정일
+            <input type="date" th:field="*{plannedDate}" class="input--date">
+        </label>
+        <div class="form__actions">
+            <a class="button" th:href="${rec} ? @{/improvements(kind='RECOMMENDATION')} : @{/improvements/findings}">취소</a>
+            <button type="submit" class="button button--primary">등록</button>
+        </div>
+    </form>
+</main>
+<script th:src="@{/js/round.js}"></script>
+</body>
+</html>

@@ -29,7 +29,7 @@
     <section class="panel">
         <h3>총괄표 점검 내용 (담당자 입력)</h3>
         <dl class="info-grid">
-            <dt>점검결과</dt><dd><span th:replace="~{inspection/form :: resultTag(${req.inspectionResult})}"></span></dd>
+            <dt>점검결과</dt><dd><span th:replace="~{fragments/common :: resultTag(${req.inspectionResult})}"></span></dd>
             <dt>점검 내용 상세</dt><dd class="pre" th:text="${req.inspectionDetail} ?: '-'">내용</dd>
             <dt>조치내용</dt><dd class="pre"><span th:text="${req.actionPlan} ?: '-'"></span>
                 <span th:if="${req.plannedDate}" th:text="|(개선 예정일 ${req.plannedDate})|"></span></dd>

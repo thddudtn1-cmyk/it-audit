@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.improvement.ImprovementMapper">
+
+    <sql id="select">
+        SELECT m.improvement_id, m.kind, m.round_id, m.team_code, m.assignee_id, m.inspection_result, m.detail,
+               m.improvement_plan, m.planned_date, m.action_result, m.action_status, m.closed_yn, m.closed_by,
+               m.closed_at, m.close_comment, m.created_by, m.created_at, m.updated_by, m.updated_at,
+               r.round_year, r.quarter, t.team_name, u.user_name AS assignee_name,
+               (SELECT COUNT(*) FROM evidence e
+                 WHERE e.owner_type = 'IMPROVEMENT' AND e.owner_id = m.improvement_id AND e.deleted_yn = 'N') AS evidence_count
+          FROM improvement m
+          JOIN audit_round r ON r.round_id = m.round_id
+          LEFT JOIN team t ON t.team_code = m.team_code
+          LEFT JOIN app_user u ON u.user_id = m.assignee_id
+    </sql>
+
+    <select id="findByFilter" resultType="com.itaudit.improvement.Improvement">
+        <include refid="select"/>
+        <where>
+            <if test="f.kind != null">AND m.kind = #{f.kind}</if>
+            <if test="f.closed != null and f.closed.name() == 'OPEN'">AND m.closed_yn = 'N'</if>
+            <if test="f.closed != null and f.closed.name() == 'CLOSED'">AND m.closed_yn = 'Y'</if>
+            <if test="f.actionResult != null">AND m.action_result = #{f.actionResult}</if>
+            <if test="f.roundId != null">AND m.round_id = #{f.roundId}</if>
+            <if test="f.assigneeId != null">AND m.assignee_id = #{f.assigneeId}</if>
+            <if test="f.overdueOnly">AND m.closed_yn = 'N' AND m.planned_date &lt; #{today}</if>
+        </where>
+         ORDER BY m.closed_yn,
+                  CASE WHEN m.planned_date IS NULL THEN 1 ELSE 0 END,
+                  m.planned_date, m.improvement_id
+    </select>
+
+    <select id="findById" resultType="com.itaudit.improvement.Improvement">
+        <include refid="select"/>
+         WHERE m.improvement_id = #{improvementId}
+    </select>
+
+    <select id="findLinkedItems" resultType="com.itaudit.improvement.LinkedItem">
+        SELECT x.improvement_id, x.round_item_id, c.seq_no, c.audit_area, c.audit_item, c.item_detail, c.audit_period
+          FROM improvement_item x
+          JOIN round_item i ON i.round_item_id = x.round_item_id
+          JOIN checklist_item c ON c.item_id = i.checklist_item_id
+         WHERE x.improvement_id IN <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+         ORDER BY x.improvement_id, c.seq_no
+    </select>
+
+    <select id="findIdsByRoundItem" resultType="long">
+        SELECT x.improvement_id
+          FROM improvement_item x
+          JOIN improvement m ON m.improvement_id = x.improvement_id
+         WHERE x.round_item_id = #{roundItemId}
+        <if test="kind != null">AND m.kind = #{kind}</if>
+         ORDER BY x.improvement_id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="improvementId" keyColumn="improvement_id">
+        INSERT INTO improvement (kind, round_id, team_code, assignee_id, inspection_result, detail, improvement_plan,
+                                 planned_date, action_result, action_status, closed_yn, created_by, created_at,
+                                 updated_by, updated_at)
+        VALUES (#{kind}, #{roundId}, #{teamCode}, #{assigneeId}, #{inspectionResult}, #{detail}, #{improvementPlan},
+                #{plannedDate}, #{actionResult}, #{actionStatus}, 'N', #{createdBy}, #{createdAt},
+                #{updatedBy}, #{updatedAt})
+    </insert>
+
+    <insert id="insertItem">
+        INSERT INTO improvement_item (improvement_id, round_item_id) VALUES (#{improvementId}, #{roundItemId})
+    </insert>
+
+    <update id="update">
+        UPDATE improvement
+           SET team_code = #{teamCode},
+               assignee_id = #{assigneeId},
+               inspection_result = #{inspectionResult},
+               detail = #{detail},
+               improvement_plan = #{improvementPlan},
+               planned_date = #{plannedDate},
+               action_result = #{actionResult},
+               action_status = #{actionStatus},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE improvement_id = #{improvementId}
+    </update>
+
+    <update id="updateClosed">
+        UPDATE improvement
+           SET closed_yn = #{closedYn}, closed_by = #{closedBy}, closed_at = #{closedAt},
+               close_comment = #{closeComment}, updated_by = #{closedBy}, updated_at = #{updatedAt}
+         WHERE improvement_id = #{improvementId}
+    </update>
+</mapper>

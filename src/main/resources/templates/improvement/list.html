@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('개선사항 관리대장')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide" th:with="rec=${filter.kind.name() == 'RECOMMENDATION'}">
+    <h2>IT자체감사 개선사항 관리대장</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <nav class="tabs">
+        <a th:href="@{/improvements(kind='IMPROVEMENT')}" th:classappend="${!rec} ? 'active'">개선사항</a>
+        <a th:href="@{/improvements(kind='RECOMMENDATION')}" th:classappend="${rec} ? 'active'">권고사항</a>
+    </nav>
+
+    <form method="get" th:action="@{/improvements}" class="filter-bar">
+        <input type="hidden" name="kind" th:value="${filter.kind}">
+        <label>종결
+            <select name="closed" onchange="this.form.submit()">
+                <option value="OPEN" th:selected="${filter.closed.name() == 'OPEN'}">미종결 (이월 포함)</option>
+                <option value="CLOSED" th:selected="${filter.closed.name() == 'CLOSED'}">종결</option>
+                <option value="ALL" th:selected="${filter.closed.name() == 'ALL'}">전체</option>
+            </select>
+        </label>
+        <label>조치 결과
+            <select name="actionResult" onchange="this.form.submit()">
+                <option value="">전체</option>
+                <option th:each="a : ${actionResults}" th:value="${a}" th:text="${a.label}" th:selected="${a == filter.actionResult}">예정</option>
+            </select>
+        </label>
+        <label>발생 회차
+            <select name="roundId" onchange="this.form.submit()">
+                <option value="">전체</option>
+                <option th:each="r : ${rounds}" th:value="${r.roundId}" th:text="${r.shortLabel}" th:selected="${r.roundId == filter.roundId}">2026 3Q</option>
+            </select>
+        </label>
+        <label class="checkbox">
+            <span>&nbsp;</span>
+            <span><input type="checkbox" name="overdueOnly" value="true" th:checked="${filter.overdueOnly}" onchange="this.form.submit()"> 개선예정일 경과만</span>
+        </label>
+        <noscript><button type="submit" class="button">조회</button></noscript>
+        <span class="toolbar__actions filter-bar__right">
+            <a sec:authorize="hasRole('AUDIT_LEAD')" th:unless="${rec}" class="button button--primary" th:href="@{/improvements/findings}">미흡 확정 건에서 등록</a>
+            <a sec:authorize="hasAnyRole('AUDIT_DEPT','AUDIT_LEAD')" th:if="${rec}" class="button button--primary" th:href="@{/improvements/recommendations/new}">권고사항 등록</a>
+        </span>
+    </form>
+
+    <div class="table-wrap">
+        <table class="table table--checklist">
+            <thead>
+            <tr>
+                <th class="col-no">No</th>
+                <th class="col-area">감사 영역</th>
+                <th class="col-item">감사 항목</th>
+                <th>항목 상세</th>
+                <th class="col-period">감사 시기</th>
+                <th class="col-team">담당부서/담당자</th>
+                <th:block th:unless="${rec}">
+                    <th class="col-period">점검 결과</th>
+                    <th class="col-detail">점검 내용 상세</th>
+                </th:block>
+                <th th:if="${rec}" class="col-detail">상세 내용</th>
+                <th class="col-material">개선 방안</th>
+                <th class="col-period">개선예정일</th>
+                <th class="col-period">조치 결과</th>
+                <th class="col-material">조치 현황</th>
+                <th class="col-period">증빙자료</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m, s : ${items}" th:classappend="${m.closed} ? 'row--inactive' : (${m.overdue} ? 'row--error' : (${m.dueSoon} ? 'row--highlight' : ''))">
+                <td class="num"><a th:href="@{/improvements/{id}(id=${m.improvementId})}" th:text="${s.count}">1</a></td>
+                <td><div th:each="x : ${m.items}" class="stack" th:text="${x.auditArea.label}">영역</div></td>
+                <td><div th:each="x : ${m.items}" class="stack" th:text="${x.auditItem}">항목</div></td>
+                <td class="small"><div th:each="x : ${m.items}" class="stack pre" th:text="|#${x.seqNo} ${x.itemDetail}|">상세</div></td>
+                <td th:text="${m.roundShortLabel}">2026 3Q</td>
+                <td th:text="${m.ownerLabel}">팀 / 담당자</td>
+                <th:block th:unless="${rec}">
+                    <td><span th:replace="~{fragments/common :: resultTag(${m.inspectionResult})}"></span></td>
+                    <td class="pre small" th:text="${m.detail}">내용</td>
+                </th:block>
+                <td th:if="${rec}" class="pre small" th:text="${m.detail}">상세 내용</td>
+                <td class="pre small" th:text="${m.improvementPlan}">방안</td>
+                <td>
+                    <span th:text="${m.plannedDate} ?: '-'">2026-12-31</span>
+                    <span th:replace="~{fragments/common :: due(${m})}"></span>
+                </td>
+                <td>
+                    <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">예정</span>
+                    <span class="tag" th:if="${m.closed}">종결</span>
+                </td>
+                <td class="pre small" th:text="${m.actionStatus}">현황</td>
+                <td class="num" th:text="${m.evidenceCount > 0} ? |${m.evidenceCount}건| : '-'">-</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(items)}"><td th:colspan="${rec} ? 12 : 13" class="empty">해당하는 건이 없습니다.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="small muted">붉은 행: 개선예정일 경과 · 노란 행: 7일 이내 임박 · 미종결 건은 분기가 바뀌어도 계속 표시됩니다.</p>
+</main>
+
+</body>
+</html>

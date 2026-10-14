@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('미흡 확정 건')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2>개선사항 등록 — 미흡 확정 건 선택</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <p class="small muted">감사부서가 미흡으로 확정했지만 아직 관리대장에 없는 건입니다. 한 개선사항으로 묶을 항목을 고르세요 (같은 회차만).</p>
+    <form method="get" th:action="@{/improvements/new}">
+        <div class="table-wrap">
+            <table class="table table--checklist">
+                <thead>
+                <tr><th class="col-flag">선택</th><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th>
+                    <th class="col-period">확정 결과</th><th>미흡 내용</th><th class="col-material">비고 (④)</th><th class="col-team">담당자</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${findings}">
+                    <td class="center"><input type="checkbox" name="roundItemIds" th:value="${f.roundItemId}"></td>
+                    <td th:text="${f.roundLabel}">2026년 3분기</td>
+                    <td class="num" th:text="${f.seqNo}">23</td>
+                    <td th:text="${f.auditItem}">항목</td>
+                    <td><span th:replace="~{fragments/common :: resultTag(${f.confirmedResult})}"></span></td>
+                    <td class="pre small" th:text="${f.findingDetail}">내용</td>
+                    <td class="pre small" th:text="${f.remark}">비고</td>
+                    <td th:text="${f.assigneeName} ?: '-'">담당자</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(findings)}"><td colspan="8" class="empty">등록할 미흡 확정 건이 없습니다.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="form__actions">
+            <a class="button" th:href="@{/improvements}">취소</a>
+            <button type="submit" class="button button--primary" th:disabled="${#lists.isEmpty(findings)}">선택 건으로 등록</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

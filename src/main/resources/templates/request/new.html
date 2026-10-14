@@ -34,7 +34,7 @@
                     <td class="num" th:text="${i.seqNo}">8</td>
                     <td th:text="${i.auditItem}">항목</td>
                     <td class="pre small" th:text="${i.itemDetail}">상세</td>
-                    <td><span th:replace="~{inspection/form :: resultTag(${i.inspectionResult})}"></span></td>
+                    <td><span th:replace="~{fragments/common :: resultTag(${i.inspectionResult})}"></span></td>
                     <td th:text="${i.assigneeName} ?: '-'">담당자</td>
                     <td>
                         <span th:if="${ex != null}" class="small">요청됨: <span th:text="${ex.requestMaterial}"></span></span>

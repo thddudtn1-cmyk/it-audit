@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 담당부서/담당자 선택 (회차 배정 화면과 같은 스크립트 사용) -->
+<th:block th:fragment="owner">
+    <div class="form-grid" data-assign-row>
+        <label>담당부서
+            <select th:field="*{teamCode}" data-team>
+                <option value="">-</option>
+                <option th:each="t : ${teams}" th:value="${t.teamCode}" th:text="${t.teamName}">팀</option>
+            </select>
+        </label>
+        <label>담당자
+            <select th:field="*{assigneeId}" data-assignee>
+                <option value="">미지정</option>
+                <option th:each="u : ${inspectors}" th:value="${u.userId}" th:attr="data-team=${u.teamCode}"
+                        th:text="|${u.userName} (${u.teamName})|">담당자</option>
+            </select>
+        </label>
+    </div>
+</th:block>
+</body>
+</html>

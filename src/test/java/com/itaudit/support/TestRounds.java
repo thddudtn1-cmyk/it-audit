@@ -45,6 +45,15 @@ public class TestRounds {
         return itemId;
     }
 
+    /** 사전요청자료 요청 → 제출 → 미흡 확정까지 끝난 상태로 만든다 */
+    public Long confirmFinding(Long roundItemId, Long deptUserId, String result, String findingDetail, String remark) {
+        jdbc.update("INSERT INTO audit_request (round_item_id, request_material, status, remark, finding_yn, confirmed_result, "
+                        + "finding_detail, requested_by, requested_at, reviewed_by, reviewed_at, updated_at) "
+                        + "VALUES (?, '요청자료', 'REVIEWED', ?, 'Y', ?, ?, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                roundItemId, remark, result, findingDetail, deptUserId, deptUserId);
+        return jdbc.queryForObject("SELECT request_id FROM audit_request WHERE round_item_id = ?", Long.class, roundItemId);
+    }
+
     /** 확인되지 않은 나머지 항목을 회신불필요로 돌리고 감사부서 제출 상태로 */
     public void submitToDept(Long roundId) {
         jdbc.update("UPDATE round_item SET no_reply_yn = 'Y' WHERE round_id = ? AND submit_status <> 'CONFIRMED'", roundId);

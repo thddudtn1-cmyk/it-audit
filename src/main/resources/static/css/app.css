@@ -242,3 +242,18 @@ form.inline { display: inline; }
 .req--reviewed { background: #e7f6ec; color: #1e6b3a; }
 .row--highlight td { background: #fffbeb; }
 .form .form-row .checkbox { font-weight: normal; margin-bottom: 4px; }
+
+/* 개선사항 (F-07) */
+.stack + .stack { border-top: 1px dotted var(--c-border); margin-top: 4px; padding-top: 4px; }
+.act--planned { background: #eef1f5; }
+.act--in_progress { background: var(--c-info-bg); color: var(--c-primary); }
+.act--done { background: #e7f6ec; color: #1e6b3a; }
+.tag--danger { background: var(--c-error-bg); color: var(--c-error); font-weight: bold; }
+.tag--warn { background: var(--c-warn-bg); color: #8a5a00; font-weight: bold; }
+.filter-bar .checkbox { flex-direction: column; }
+.filter-bar__right { margin-left: auto; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 14px; }
+.check-list { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto;
+    border: 1px solid var(--c-border); border-radius: 4px; padding: 8px; }
+.check-list .checkbox { font-weight: normal !important; margin: 0 !important; }
+.form .form--inline input { width: auto; flex: 1; }

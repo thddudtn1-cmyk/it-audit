@@ -72,7 +72,7 @@
                     <span th:text="${i.requestMaterial}">자료</span>
                     <span class="tag" th:if="${i.sampleSize != null}" th:text="|표본 ${i.sampleSize}개|">표본</span>
                 </td>
-                <td><span th:replace="~{inspection/form :: resultTag(${i.inspectionResult})}"></span></td>
+                <td><span th:replace="~{fragments/common :: resultTag(${i.inspectionResult})}"></span></td>
                 <td class="pre small" th:text="${i.inspectionDetail}">내용</td>
                 <td class="pre small" th:text="${i.remark1}">비고</td>
                 <td class="pre small">

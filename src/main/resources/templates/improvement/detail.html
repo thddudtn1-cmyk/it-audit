@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${m.kind.label})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container" th:with="rec=${m.kind.name() == 'RECOMMENDATION'}">
+    <div class="page-title">
+        <h2 th:text="|${m.kind.label} · ${m.roundShortLabel}|">개선사항</h2>
+        <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">예정</span>
+        <span class="tag" th:if="${m.closed}">종결</span>
+        <span th:replace="~{fragments/common :: due(${m})}"></span>
+    </div>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <section class="panel">
+        <h3>연결 항목</h3>
+        <table class="table">
+            <thead><tr><th class="col-no">순번</th><th class="col-area">감사 영역</th><th class="col-item">감사 항목</th><th>항목 상세</th><th class="col-period">감사 시기</th></tr></thead>
+            <tbody>
+            <tr th:each="x : ${m.items}">
+                <td class="num" th:text="${x.seqNo}">23</td>
+                <td th:text="${x.auditArea.label}">영역</td>
+                <td th:text="${x.auditItem}">항목</td>
+                <td class="pre small" th:text="${x.itemDetail}">상세</td>
+                <td th:text="${m.roundShortLabel}">2026 3Q</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <form th:object="${form}" th:action="@{/improvements/{id}(id=${m.improvementId})}" method="post"
+          enctype="multipart/form-data" class="form panel">
+        <h3>관리 정보</h3>
+        <fieldset th:disabled="${!perm.manage}">
+            <th:block th:replace="~{improvement/fields :: owner}"></th:block>
+            <label th:unless="${rec}">점검 결과
+                <select th:field="*{inspectionResult}">
+                    <option th:each="r : ${findingResults}" th:value="${r}" th:text="${r.label}">미흡</option>
+                </select>
+            </label>
+            <label><span th:text="${rec} ? '상세 내용' : '점검 내용 상세'">내용</span>
+                <textarea th:field="*{detail}" rows="4" maxlength="4000"></textarea>
+            </label>
+        </fieldset>
+
+        <h3>조치 정보</h3>
+        <fieldset th:disabled="${!perm.action}">
+            <label>개선 방안
+                <textarea th:field="*{improvementPlan}" rows="3" maxlength="2000"></textarea>
+            </label>
+            <div class="form-grid">
+                <label>개선예정일
+                    <input type="date" th:field="*{plannedDate}">
+                </label>
+                <label>조치 결과
+                    <select th:field="*{actionResult}">
+                        <option th:each="a : ${actionResults}" th:value="${a}" th:text="${a.label}">예정</option>
+                    </select>
+                </label>
+            </div>
+            <label>조치 현황 <small class="muted">완료로 바꾸려면 필수</small>
+                <textarea th:field="*{actionStatus}" rows="3" maxlength="2000"></textarea>
+            </label>
+            <div class="form-row">
+                <span class="form-row__label">증빙자료</span>
+                <ul class="file-list">
+                    <li th:each="e : ${evidences}">
+                        <a th:href="@{/evidence/{id}(id=${e.evidenceId})}" th:text="${e.originalName}">파일</a>
+                        <span class="muted small" th:text="|${e.sizeLabel} · ${e.uploaderName} · ${#temporals.format(e.uploadedAt, 'MM-dd HH:mm')}|"></span>
+                        <button type="submit" class="link-button small" th:if="${perm.action}" th:attr="form=|delete-${e.evidenceId}|">삭제</button>
+                    </li>
+                    <li th:if="${#lists.isEmpty(evidences)}" class="muted">첨부한 증빙자료가 없습니다.</li>
+                </ul>
+                <input type="file" name="files" multiple th:if="${perm.action}" accept=".pdf,.xlsx,.docx,.png,.jpg,.jpeg,.zip,.txt">
+            </div>
+        </fieldset>
+
+        <div class="form__actions">
+            <a class="button" th:href="@{/improvements(kind=${m.kind})}">목록</a>
+            <button type="submit" class="button button--primary" th:if="${perm.any()}">저장</button>
+        </div>
+    </form>
+    <form th:each="e : ${evidences}" th:if="${perm.action}" th:id="|delete-${e.evidenceId}|" method="post"
+          th:action="@{/evidence/{id}/delete(id=${e.evidenceId})}" hidden>
+        <input type="hidden" name="returnUrl" th:value="|/improvements/${m.improvementId}|">
+    </form>
+
+    <!-- 종결 (주관자) -->
+    <section class="panel" th:if="${perm.close}">
+        <h3>종결</h3>
+        <th:block th:unless="${m.closed}">
+            <p class="small muted" th:if="${m.actionResult.name() != 'DONE'}">조치 결과가 '완료'가 되면 종결할 수 있습니다.</p>
+            <form th:action="@{/improvements/{id}/close(id=${m.improvementId})}" method="post" class="form form--inline">
+                <input type="text" name="comment" maxlength="1000" placeholder="종결 의견 (선택)">
+                <button type="submit" class="button button--primary" th:disabled="${m.actionResult.name() != 'DONE'}">종결</button>
+            </form>
+        </th:block>
+        <th:block th:if="${m.closed}">
+            <p th:text="|${#temporals.format(m.closedAt, 'yyyy-MM-dd HH:mm')} 종결${m.closeComment != null ? ' — ' + m.closeComment : ''}|">종결</p>
+            <form th:action="@{/improvements/{id}/reopen(id=${m.improvementId})}" method="post" class="form form--inline">
+                <input type="text" name="reason" maxlength="1000" placeholder="종결 취소 사유" required>
+                <button type="submit" class="button">종결 취소</button>
+            </form>
+        </th:block>
+    </section>
+    <p class="small muted" th:if="${m.closed and !perm.close}"
+       th:text="|${#temporals.format(m.closedAt, 'yyyy-MM-dd')} 종결된 건입니다.|"></p>
+</main>
+<script th:src="@{/js/round.js}"></script>
+</body>
+</html>

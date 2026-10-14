@@ -17,6 +17,7 @@ import com.itaudit.auth.LoginUser;
 import com.itaudit.common.BusinessException;
 import com.itaudit.evidence.EvidenceOwnerType;
 import com.itaudit.evidence.EvidenceService;
+import com.itaudit.improvement.ImprovementService;
 import com.itaudit.request.AuditRequestService;
 import com.itaudit.request.RequestStatus;
 import com.itaudit.round.RoundItem;
@@ -28,12 +29,14 @@ public class InspectionController {
     private final InspectionService service;
     private final EvidenceService evidenceService;
     private final AuditRequestService requestService;
+    private final ImprovementService improvementService;
 
     public InspectionController(InspectionService service, EvidenceService evidenceService,
-                                AuditRequestService requestService) {
+                                AuditRequestService requestService, ImprovementService improvementService) {
         this.service = service;
         this.evidenceService = evidenceService;
         this.requestService = requestService;
+        this.improvementService = improvementService;
     }
 
     @GetMapping("/my-tasks")
@@ -44,6 +47,7 @@ public class InspectionController {
         model.addAttribute("done", items.stream().filter(i -> !i.isInputOpen() || i.isNoReply()).toList());
         model.addAttribute("requests", requestService.findMine(user).stream()
                 .filter(r -> r.getStatus() == RequestStatus.REQUESTED).toList());
+        model.addAttribute("improvements", improvementService.findMyOpen(user));
         return "inspection/my-tasks";
     }
 
