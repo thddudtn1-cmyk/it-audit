@@ -4,7 +4,7 @@ package com.itaudit.round;
 public enum RoundStatus {
     DRAFT("작성중"),
     REVIEW("검토중"),
-    SUBMITTED("감사부서 제출"),
+    SUBMITTED("감사부서 검토중"),
     DONE("완료");
 
     private final String label;

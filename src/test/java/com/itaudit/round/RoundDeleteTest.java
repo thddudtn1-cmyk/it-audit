@@ -114,7 +114,7 @@ class RoundDeleteTest {
         assertThat(count("SELECT COUNT(*) FROM evidence")).isZero();
         assertThat(count("SELECT COUNT(*) FROM comment_note")).isZero();
         assertThat(activityLogMapper.findByAction(ActivityLogService.ROUND_DELETE)).hasSize(1)
-                .allMatch(l -> l.getDetail().contains("2026년 3분기 삭제 (상태 감사부서 제출)")
+                .allMatch(l -> l.getDetail().contains("2026년 3분기 삭제 (상태 감사부서 검토중)")
                         && l.getDetail().contains("점검 입력 1건") && l.getDetail().contains("적정성 점검 기록 1건")
                         && l.getDetail().contains("증적 파일 2개") && l.getDetail().contains("코멘트 1건")
                         && l.getDetail().contains("자동 등록 개선사항 0건"));

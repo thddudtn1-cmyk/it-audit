@@ -28,7 +28,7 @@
             <span><strong>보완 제출(재검토)</strong> <span th:text="|${countSubmitted}건|">0건</span></span>
             <span><strong>적정</strong> <span th:text="|${countPassed}건|">0건</span></span>
             <span><strong>미흡 확정</strong> <span th:text="|${countFinding}건|">0건</span></span>
-            <span><strong>회차 상태</strong> <span th:text="${round.status.label}">감사부서 제출</span></span>
+            <span><strong>회차 상태</strong> <span th:text="${round.status.label}">감사부서 검토중</span></span>
             <span class="toolbar__actions">
                 <a class="button" th:href="@{/rounds/{id}(id=${round.roundId})}">분기 총괄표</a>
                 <a class="button" th:href="@{/requests/export(roundId=${round.roundId})}">엑셀 내보내기</a>
