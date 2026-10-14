@@ -5,7 +5,10 @@
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="container">
     <h2>오류</h2>
-    <div class="panel empty">처리 중 오류가 발생했습니다. <a th:href="@{/}">첫 화면으로</a></div>
+    <div class="panel empty">
+        <span th:text="${errorMessage} ?: '처리 중 오류가 발생했습니다.'">오류</span>
+        <a href="javascript:history.back()">이전 화면으로</a> · <a th:href="@{/}">첫 화면으로</a>
+    </div>
 </main>
 </body>
 </html>

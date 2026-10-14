@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('내 할 일')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2>내 할 일</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <section>
+        <h3 th:text="|입력 필요 ${#lists.size(pending)}건|">입력 필요</h3>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>점검방식</th>
+                    <th class="col-material">사전요청자료</th><th>점검결과</th><th>상태</th><th class="col-act"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="i : ${pending}" th:classappend="${i.submitStatus.name() == 'REJECTED'} ? 'row--error'">
+                    <td th:text="${i.roundLabel}">2026년 3분기</td>
+                    <td class="num" th:text="${i.seqNo}">23</td>
+                    <td th:text="${i.auditItem}">항목</td>
+                    <td class="pre small" th:text="${i.itemDetail}">상세</td>
+                    <td class="pre small">
+                        <span th:text="${i.requestMaterial}"></span>
+                        <span class="tag" th:if="${i.sampleSize != null}" th:text="|표본 ${i.sampleSize}개|"></span>
+                    </td>
+                    <td><span th:replace="~{inspection/form :: resultTag(${i.inspectionResult})}"></span></td>
+                    <td>
+                        <span class="tag" th:classappend="|submit--${i.submitStatus.name().toLowerCase()}|"
+                              th:text="${i.inspectionResult != null and i.submitStatus.name() == 'NOT_SUBMITTED'} ? '임시저장' : ${i.submitStatus.label}">미제출</span>
+                    </td>
+                    <td><a class="button" th:href="@{/inspections/{id}(id=${i.roundItemId})}">입력</a></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(pending)}"><td colspan="8" class="empty">입력할 점검항목이 없습니다.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section" th:if="${!#lists.isEmpty(done)}">
+        <h3 th:text="|제출 완료·회신불필요 ${#lists.size(done)}건|">제출 완료</h3>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>점검결과</th><th>상태</th><th>제출일</th><th class="col-act"></th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="i : ${done}">
+                    <td th:text="${i.roundLabel}">2026년 3분기</td>
+                    <td class="num" th:text="${i.seqNo}">23</td>
+                    <td th:text="${i.auditItem}">항목</td>
+                    <td><span th:replace="~{inspection/form :: resultTag(${i.inspectionResult})}"></span></td>
+                    <td>
+                        <span th:if="${i.noReply}" class="tag">회신불필요</span>
+                        <span th:unless="${i.noReply}" class="tag" th:classappend="|submit--${i.submitStatus.name().toLowerCase()}|" th:text="${i.submitStatus.label}">제출</span>
+                    </td>
+                    <td th:text="${i.submittedAt != null} ? ${#temporals.format(i.submittedAt, 'yyyy-MM-dd HH:mm')} : '-'">-</td>
+                    <td><a th:href="@{/inspections/{id}(id=${i.roundItemId})}">보기</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <p class="small muted">받은 사전요청자료(F-06)와 내 개선사항(F-07)은 해당 기능을 만들 때 이 화면에 추가됩니다.</p>
+</main>
+</body>
+</html>

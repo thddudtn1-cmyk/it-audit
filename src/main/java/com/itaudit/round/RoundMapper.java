@@ -26,6 +26,16 @@ public interface RoundMapper {
 
     void insertItem(RoundItem item);
 
+    List<RoundItem> findByAssignee(@Param("userId") Long userId);
+
+    List<RoundItem> findHistory(@Param("seqNo") int seqNo, @Param("year") int year, @Param("quarter") int quarter);
+
+    /** 점검결과·점검 내용 상세·비고1·조치내용·개선 예정일 */
+    int updateInspection(RoundItem item);
+
+    /** 제출 상태와 제출자·제출일시 */
+    int updateSubmitStatus(RoundItem item);
+
     /** 배정 값(담당팀·담당자·사전요청자료·표본 수·회신불필요·제외) 수정 */
     int updateAssignment(RoundItem item);
 }

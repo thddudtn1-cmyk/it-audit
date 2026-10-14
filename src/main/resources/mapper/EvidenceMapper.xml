@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.evidence.EvidenceMapper">
+
+    <sql id="columns">
+        e.evidence_id, e.owner_type, e.owner_id, e.original_name, e.stored_path, e.file_size, e.content_type,
+        e.uploaded_by, u.user_name AS uploader_name, e.uploaded_at, e.deleted_yn, e.deleted_by, e.deleted_at
+    </sql>
+
+    <select id="findActive" resultType="com.itaudit.evidence.Evidence">
+        SELECT <include refid="columns"/>
+          FROM evidence e
+          LEFT JOIN app_user u ON u.user_id = e.uploaded_by
+         WHERE e.owner_type = #{ownerType} AND e.owner_id = #{ownerId} AND e.deleted_yn = 'N'
+         ORDER BY e.evidence_id
+    </select>
+
+    <select id="findById" resultType="com.itaudit.evidence.Evidence">
+        SELECT <include refid="columns"/>
+          FROM evidence e
+          LEFT JOIN app_user u ON u.user_id = e.uploaded_by
+         WHERE e.evidence_id = #{evidenceId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="evidenceId" keyColumn="evidence_id">
+        INSERT INTO evidence (owner_type, owner_id, original_name, stored_path, file_size, content_type,
+                              uploaded_by, uploaded_at, deleted_yn)
+        VALUES (#{ownerType}, #{ownerId}, #{originalName}, #{storedPath}, #{fileSize}, #{contentType},
+                #{uploadedBy}, #{uploadedAt}, 'N')
+    </insert>
+
+    <update id="markDeleted">
+        UPDATE evidence
+           SET deleted_yn = 'Y', deleted_by = #{deletedBy}, deleted_at = #{deletedAt}
+         WHERE evidence_id = #{evidenceId} AND deleted_yn = 'N'
+    </update>
+</mapper>

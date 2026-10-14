@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|${round.label} #${item.seqNo} 점검 입력|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container">
+    <div class="page-title">
+        <h2 th:text="|${round.label} · ${item.auditItem}|">점검 입력</h2>
+        <span class="tag" th:if="${item.excluded}">제외</span>
+        <span class="tag" th:if="${item.noReply}">회신불필요</span>
+        <span class="tag" th:unless="${item.noReply}" th:classappend="|submit--${item.submitStatus.name().toLowerCase()}|" th:text="${item.submitStatus.label}">미제출</span>
+    </div>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="alert alert--info" th:if="${!editable and blockReason != null and loginUser.role.name() == 'INSPECTOR'}" th:text="${blockReason}">안내</div>
+
+    <!-- 읽기: 회차 항목 정보 (③ 총괄표 항목명) -->
+    <section class="panel">
+        <dl class="info-grid">
+            <dt>감사 영역</dt><dd th:text="${item.auditArea.label}">영역</dd>
+            <dt>평가항목</dt><dd th:text="${item.auditItem}">항목</dd>
+            <dt>법규/규정</dt><dd class="pre" th:text="${item.regulation} ?: '-'">규정</dd>
+            <dt>점검방식</dt><dd class="pre" th:text="${item.itemDetail}">상세</dd>
+            <dt>점검시기</dt><dd th:text="${item.auditPeriod.label}">3분기</dd>
+            <dt>담당</dt><dd th:text="|${item.teamName ?: '-'} / ${item.assigneeName ?: '미배정'}|">팀 / 담당자</dd>
+            <dt>사전요청자료</dt>
+            <dd class="pre">
+                <span th:text="${item.requestMaterial} ?: '-'">자료</span>
+                <span class="tag" th:if="${item.sampleSize != null}" th:text="|표본 ${item.sampleSize}개|">표본</span>
+            </dd>
+        </dl>
+    </section>
+
+    <!-- 입력 -->
+    <form th:object="${form}" th:action="@{/inspections/{id}(id=${item.roundItemId})}" method="post"
+          enctype="multipart/form-data" class="form panel" data-inspection-form>
+        <fieldset th:disabled="${!editable}">
+            <div class="form-row">
+                <span class="form-row__label">점검결과</span>
+                <div class="result-options">
+                    <label th:each="r : ${results}" class="result-option" th:title="${r.description}">
+                        <input type="radio" th:field="*{inspectionResult}" th:value="${r}">
+                        <span class="result" th:classappend="|result--${r.name().toLowerCase()}|" th:text="${r.label}">정상</span>
+                        <small th:text="${r.description}">설명</small>
+                    </label>
+                </div>
+            </div>
+            <label>점검 내용 상세
+                <textarea th:field="*{inspectionDetail}" rows="6" maxlength="4000" placeholder="점검한 방법과 확인한 내용을 적어 주세요."></textarea>
+            </label>
+            <label>비고1
+                <textarea th:field="*{remark1}" rows="2" maxlength="1000"></textarea>
+            </label>
+            <div class="action-fields" data-action-fields>
+                <label>조치내용 <small class="muted">점검결과가 정상이 아니면 필수</small>
+                    <textarea th:field="*{actionPlan}" rows="3" maxlength="2000"></textarea>
+                </label>
+                <label>개선 예정일 <small class="muted">점검결과가 정상이 아니면 필수</small>
+                    <input type="date" th:field="*{plannedDate}" class="input--date">
+                </label>
+            </div>
+
+            <div class="form-row">
+                <span class="form-row__label">증적 파일</span>
+                <ul class="file-list">
+                    <li th:each="e : ${evidences}">
+                        <a th:href="@{/evidence/{id}(id=${e.evidenceId})}" th:text="${e.originalName}">파일</a>
+                        <span class="muted small" th:text="|${e.sizeLabel} · ${e.uploaderName} · ${#temporals.format(e.uploadedAt, 'MM-dd HH:mm')}|"></span>
+                        <button type="submit" class="link-button small" th:if="${editable}"
+                                th:attr="form=|delete-${e.evidenceId}|">삭제</button>
+                    </li>
+                    <li th:if="${#lists.isEmpty(evidences)}" class="muted">첨부한 파일이 없습니다.</li>
+                </ul>
+                <input type="file" name="files" multiple th:if="${editable}"
+                       accept=".pdf,.xlsx,.docx,.png,.jpg,.jpeg,.zip,.txt">
+                <small class="muted" th:if="${editable}">pdf, xlsx, docx, png, jpg, zip, txt · 1건당 50MB 이하 · 여러 개 선택 가능</small>
+            </div>
+        </fieldset>
+
+        <div class="form__actions">
+            <a class="button" th:href="${loginUser.role.name() == 'INSPECTOR'} ? @{/my-tasks} : @{/rounds/{id}(id=${round.roundId})}">목록</a>
+            <th:block th:if="${editable}">
+                <button type="submit" name="action" value="save" class="button">임시저장</button>
+                <button type="submit" name="action" value="submit" class="button button--primary">제출</button>
+            </th:block>
+        </div>
+    </form>
+
+    <!-- 증적 삭제 폼 (위 목록의 삭제 버튼이 form 속성으로 연결) -->
+    <form th:each="e : ${evidences}" th:if="${editable}" th:id="|delete-${e.evidenceId}|" method="post"
+          th:action="@{/evidence/{id}/delete(id=${e.evidenceId})}" hidden>
+        <input type="hidden" name="returnUrl" th:value="|/inspections/${item.roundItemId}|">
+    </form>
+
+    <!-- 지난 회차 이력 -->
+    <section class="panel">
+        <h3>지난 회차 이력</h3>
+        <table class="table" th:if="${!#lists.isEmpty(history)}">
+            <thead><tr><th>회차</th><th>담당자</th><th>점검결과</th><th>점검 내용 상세</th><th>조치내용 및 개선 예정일</th></tr></thead>
+            <tbody>
+            <tr th:each="h : ${history}">
+                <td th:text="${h.roundLabel}">2025년 3분기</td>
+                <td th:text="${h.assigneeName} ?: '-'">담당자</td>
+                <td>
+                    <span th:if="${h.excluded}" class="tag" th:title="${h.excludeReason}">제외</span>
+                    <span th:unless="${h.excluded}" th:replace="~{inspection/form :: resultTag(${h.inspectionResult})}"></span>
+                </td>
+                <td class="pre small" th:text="${h.inspectionDetail}">내용</td>
+                <td class="pre small"><span th:text="${h.actionPlan}"></span>
+                    <span th:if="${h.plannedDate}" th:text="|(${h.plannedDate})|"></span></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="muted" th:if="${#lists.isEmpty(history)}">같은 항목의 지난 회차 기록이 없습니다.</p>
+    </section>
+</main>
+
+<!-- 점검결과 표시 조각 (다른 화면에서도 사용) -->
+<th:block th:fragment="resultTag(result)">
+    <span th:if="${result != null}" class="result" th:classappend="|result--${result.name().toLowerCase()}|"
+          th:text="${result.label}" th:title="${result.description}">정상</span>
+    <span th:if="${result == null}" class="muted">-</span>
+</th:block>
+
+<script th:src="@{/js/inspection.js}"></script>
+</body>
+</html>

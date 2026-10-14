@@ -47,7 +47,11 @@
     <sql id="itemColumns">
         i.round_item_id, i.round_id, i.checklist_item_id, i.team_code, i.assignee_id, i.request_material,
         i.sample_size, i.no_reply_yn, i.excluded_yn, i.exclude_reason, i.submit_status,
+        i.inspection_result, i.inspection_detail, i.remark1, i.action_plan, i.planned_date,
+        i.submitted_by, i.submitted_at,
         i.created_at, i.updated_by, i.updated_at,
+        (SELECT COUNT(*) FROM evidence e
+          WHERE e.owner_type = 'ROUND_ITEM' AND e.owner_id = i.round_item_id AND e.deleted_yn = 'N') AS evidence_count,
         c.seq_no, c.audit_area, c.audit_item, c.item_detail, c.audit_period, c.regulation,
         t.team_name, u.user_name AS assignee_name
     </sql>
@@ -79,6 +83,49 @@
          WHERE r.round_year &lt; #{year} OR (r.round_year = #{year} AND r.quarter &lt; #{quarter})
          ORDER BY r.round_year DESC, r.quarter DESC, c.seq_no
     </select>
+
+    <!-- 내 할 일: 담당자에게 배정된 항목 (제외 항목·완료 회차 제외) -->
+    <select id="findByAssignee" resultType="com.itaudit.round.RoundItem">
+        SELECT <include refid="itemColumns"/>, r.round_year, r.quarter, r.status AS round_status
+        <include refid="itemJoins"/>
+          JOIN audit_round r ON r.round_id = i.round_id
+         WHERE i.assignee_id = #{userId}
+           AND i.excluded_yn = 'N'
+           AND r.status &lt;&gt; 'DONE'
+         ORDER BY r.round_year DESC, r.quarter DESC, c.seq_no
+    </select>
+
+    <!-- 같은 순번 항목의 지난 회차 이력 -->
+    <select id="findHistory" resultType="com.itaudit.round.RoundItem">
+        SELECT <include refid="itemColumns"/>, r.round_year, r.quarter, r.status AS round_status
+        <include refid="itemJoins"/>
+          JOIN audit_round r ON r.round_id = i.round_id
+         WHERE c.seq_no = #{seqNo}
+           AND (r.round_year &lt; #{year} OR (r.round_year = #{year} AND r.quarter &lt; #{quarter}))
+         ORDER BY r.round_year DESC, r.quarter DESC
+    </select>
+
+    <update id="updateInspection">
+        UPDATE round_item
+           SET inspection_result = #{inspectionResult},
+               inspection_detail = #{inspectionDetail},
+               remark1 = #{remark1},
+               action_plan = #{actionPlan},
+               planned_date = #{plannedDate},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE round_item_id = #{roundItemId}
+    </update>
+
+    <update id="updateSubmitStatus">
+        UPDATE round_item
+           SET submit_status = #{submitStatus},
+               submitted_by = #{submittedBy},
+               submitted_at = #{submittedAt},
+               updated_by = #{updatedBy},
+               updated_at = #{updatedAt}
+         WHERE round_item_id = #{roundItemId}
+    </update>
 
     <insert id="insertItem" useGeneratedKeys="true" keyProperty="roundItemId" keyColumn="round_item_id">
         INSERT INTO round_item (round_id, checklist_item_id, team_code, assignee_id, request_material, sample_size,

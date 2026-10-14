@@ -17,11 +17,6 @@ public class PreparingController {
         return preparing(model, Menu.DASHBOARD);
     }
 
-    @GetMapping("/my-tasks")
-    public String myTasks(Model model) {
-        return preparing(model, Menu.MY_TASKS);
-    }
-
     @GetMapping("/requests")
     public String requests(Model model) {
         return preparing(model, Menu.REQUESTS);

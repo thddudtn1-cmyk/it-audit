@@ -30,6 +30,10 @@ public class ActivityLogService {
     public static final String CHECKLIST_UPDATE = "CHECKLIST_UPDATE";
     public static final String ROUND_CREATE = "ROUND_CREATE";
     public static final String ROUND_ITEM_ASSIGN = "ROUND_ITEM_ASSIGN";
+    public static final String INSPECTION_SAVE = "INSPECTION_SAVE";
+    public static final String INSPECTION_SUBMIT = "INSPECTION_SUBMIT";
+    public static final String EVIDENCE_UPLOAD = "EVIDENCE_UPLOAD";
+    public static final String EVIDENCE_DELETE = "EVIDENCE_DELETE";
 
     private final ActivityLogMapper mapper;
 

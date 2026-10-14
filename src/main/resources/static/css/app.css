@@ -196,3 +196,34 @@ form.inline { display: inline; }
 .status--done { background: #e7f6ec; color: #1e6b3a; }
 .submit--submitted, .submit--confirmed { background: #e7f6ec; color: #1e6b3a; }
 .submit--rejected { background: var(--c-error-bg); color: var(--c-error); }
+
+/* 점검 입력 */
+.section { margin-top: 24px; }
+.info-grid { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; margin: 0; }
+.info-grid dt { color: var(--c-muted); font-weight: bold; }
+.info-grid dd { margin: 0; }
+.form fieldset { border: none; padding: 0; margin: 0; min-width: 0; }
+.form-row { margin-bottom: 14px; }
+.form-row__label { display: block; font-weight: bold; margin-bottom: 6px; }
+.result-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.result-option {
+    display: flex !important; flex-direction: column; gap: 2px; margin: 0 !important; padding: 8px 10px;
+    border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer; font-weight: normal !important;
+}
+.result-option input { position: absolute; opacity: 0; pointer-events: none; }
+.result-option:has(input:checked) { border-color: var(--c-primary); box-shadow: 0 0 0 1px var(--c-primary); background: var(--c-info-bg); }
+.result-option small { color: var(--c-muted); font-size: 12px; }
+.input--date { max-width: 180px; }
+.action-fields { padding: 10px 12px; border: 1px dashed transparent; border-radius: 6px; margin-bottom: 14px; }
+.action-fields--required { border-color: #f0b429; background: var(--c-warn-bg); }
+.file-list { list-style: none; padding: 0; margin: 0 0 8px; }
+.file-list li { padding: 4px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* 점검결과 4단계 */
+.result { display: inline-block; padding: 1px 8px; border-radius: 9px; font-size: 12px; font-weight: bold; white-space: nowrap; }
+.result--normal { background: #e7f6ec; color: #1e6b3a; }
+.result--needs_improvement { background: #fff6e0; color: #8a5a00; }
+.result--insufficient { background: #ffe9d6; color: #a14a00; }
+.result--risk { background: var(--c-error-bg); color: var(--c-error); }
+.col-detail { width: 260px; }
+.nowrap { white-space: nowrap; }

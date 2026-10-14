@@ -1,9 +1,11 @@
 package com.itaudit.round;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.itaudit.checklist.AuditArea;
 import com.itaudit.checklist.AuditPeriod;
+import com.itaudit.inspection.InspectionResult;
 
 /**
  * 회차 점검항목 (round_item). 조회 시 체크리스트 마스터·팀·담당자 이름을 조인해 채운다.
@@ -23,6 +25,17 @@ public class RoundItem {
     private String excludedYn;
     private String excludeReason;
     private SubmitStatus submitStatus;
+    // 담당자 입력 (F-04)
+    private InspectionResult inspectionResult;
+    private String inspectionDetail;
+    /** 비고1 (③ 총괄표) */
+    private String remark1;
+    /** 조치내용 (③ '조치내용 및 개선 예정일'의 글) */
+    private String actionPlan;
+    /** 개선 예정일 (③ '조치내용 및 개선 예정일'의 날짜) */
+    private LocalDate plannedDate;
+    private Long submittedBy;
+    private LocalDateTime submittedAt;
     private LocalDateTime createdAt;
     private Long updatedBy;
     private LocalDateTime updatedAt;
@@ -36,9 +49,11 @@ public class RoundItem {
     private String regulation;
     private String teamName;
     private String assigneeName;
-    /** 지난 회차 조회(findItemsBefore) 때만 채운다 */
+    private int evidenceCount;
+    /** 지난 회차 조회·내 할 일 조회 때만 채운다 */
     private Integer roundYear;
     private Integer quarter;
+    private RoundStatus roundStatus;
 
     public String getRoundLabel() {
         return roundYear == null ? null : roundYear + "년 " + quarter + "분기";
@@ -50,6 +65,11 @@ public class RoundItem {
 
     public boolean isNoReply() {
         return "Y".equals(noReplyYn);
+    }
+
+    /** 담당자가 입력·수정할 수 있는 제출 상태 (미제출, 반려) */
+    public boolean isInputOpen() {
+        return submitStatus == SubmitStatus.NOT_SUBMITTED || submitStatus == SubmitStatus.REJECTED;
     }
 
     public Long getRoundItemId() { return roundItemId; }
@@ -96,6 +116,24 @@ public class RoundItem {
     public void setTeamName(String teamName) { this.teamName = teamName; }
     public String getAssigneeName() { return assigneeName; }
     public void setAssigneeName(String assigneeName) { this.assigneeName = assigneeName; }
+    public InspectionResult getInspectionResult() { return inspectionResult; }
+    public void setInspectionResult(InspectionResult inspectionResult) { this.inspectionResult = inspectionResult; }
+    public String getInspectionDetail() { return inspectionDetail; }
+    public void setInspectionDetail(String inspectionDetail) { this.inspectionDetail = inspectionDetail; }
+    public String getRemark1() { return remark1; }
+    public void setRemark1(String remark1) { this.remark1 = remark1; }
+    public String getActionPlan() { return actionPlan; }
+    public void setActionPlan(String actionPlan) { this.actionPlan = actionPlan; }
+    public LocalDate getPlannedDate() { return plannedDate; }
+    public void setPlannedDate(LocalDate plannedDate) { this.plannedDate = plannedDate; }
+    public Long getSubmittedBy() { return submittedBy; }
+    public void setSubmittedBy(Long submittedBy) { this.submittedBy = submittedBy; }
+    public LocalDateTime getSubmittedAt() { return submittedAt; }
+    public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public int getEvidenceCount() { return evidenceCount; }
+    public void setEvidenceCount(int evidenceCount) { this.evidenceCount = evidenceCount; }
+    public RoundStatus getRoundStatus() { return roundStatus; }
+    public void setRoundStatus(RoundStatus roundStatus) { this.roundStatus = roundStatus; }
     public Integer getRoundYear() { return roundYear; }
     public void setRoundYear(Integer roundYear) { this.roundYear = roundYear; }
     public Integer getQuarter() { return quarter; }
