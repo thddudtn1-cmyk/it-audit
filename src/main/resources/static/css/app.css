@@ -427,3 +427,7 @@ form.inline { display: inline; }
 .table--checklist td.pre:not(.small) { min-width: 240px; }
 .bar-row__label .result, .meter-row .tag { justify-self: start; align-self: flex-start; }
 .col-act2 { width: 84px; }
+
+/* 감사 로그 (F-11) */
+.input--sm { padding: 6px 8px; border: 1px solid var(--c-border); border-radius: 4px; font: inherit; min-width: 130px; }
+.pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 14px 0; }

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('감사 로그')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2>감사 로그</h2>
+    <p class="small muted">판정·제출·종결·파일 변경 등 주요 행위의 기록입니다. 읽기 전용이며 수정·삭제할 수 없습니다.</p>
+
+    <form method="get" th:action="@{/audit-log}" class="filter-bar">
+        <label>행위
+            <select name="action">
+                <option value="">전체</option>
+                <option th:each="e : ${actions}" th:value="${e.key}" th:text="${e.value}" th:selected="${e.key == action}">로그인</option>
+            </select>
+        </label>
+        <label>사용자 아이디
+            <input type="text" name="loginId" th:value="${loginId}" class="input--sm">
+        </label>
+        <label>기간 시작
+            <input type="date" name="from" th:value="${from}" class="input--sm">
+        </label>
+        <label>기간 끝
+            <input type="date" name="to" th:value="${to}" class="input--sm">
+        </label>
+        <label>내용·대상 검색
+            <input type="text" name="keyword" th:value="${keyword}" class="input--sm">
+        </label>
+        <button type="submit" class="button button--primary">조회</button>
+        <a class="button" th:href="@{/audit-log}">초기화</a>
+    </form>
+
+    <div class="toolbar"><span th:text="|총 ${total}건 · ${page} / ${pages} 쪽|">총 0건</span></div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+            <tr><th>일시</th><th>사용자</th><th>행위</th><th>대상</th><th>내용</th><th>IP</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="l : ${logs}">
+                <td class="nowrap" th:text="${#temporals.format(l.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2026-10-14 10:00:00</td>
+                <td th:text="${l.loginId} ?: '-'">admin</td>
+                <td><span class="tag" th:classappend="${l.action == 'LOGIN_FAIL'} ? 'tag--danger'" th:text="${labelOf.apply(l.action)}">로그인</span></td>
+                <td class="small nowrap" th:text="${l.targetType} != null ? |${l.targetType} ${l.targetId}| : '-'">ROUND 1</td>
+                <td class="pre small" th:text="${l.detail}">내용</td>
+                <td class="small nowrap" th:text="${l.clientIp} ?: '-'">127.0.0.1</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(logs)}"><td colspan="6" class="empty">조건에 맞는 기록이 없습니다.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav class="pager" th:if="${pages > 1}">
+        <a class="button button--small" th:if="${page > 1}"
+           th:href="@{/audit-log(action=${action},loginId=${loginId},keyword=${keyword},from=${from},to=${to},page=${page - 1})}">이전</a>
+        <span th:text="|${page} / ${pages}|">1 / 3</span>
+        <a class="button button--small" th:if="${page < pages}"
+           th:href="@{/audit-log(action=${action},loginId=${loginId},keyword=${keyword},from=${from},to=${to},page=${page + 1})}">다음</a>
+    </nav>
+</main>
+</body>
+</html>

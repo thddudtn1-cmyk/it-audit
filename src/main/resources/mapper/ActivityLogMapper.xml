@@ -13,4 +13,27 @@
          WHERE action = #{action}
          ORDER BY log_id DESC
     </select>
+
+    <sql id="searchWhere">
+        <where>
+            <if test="action != null">AND action = #{action}</if>
+            <if test="loginId != null">AND login_id = #{loginId}</if>
+            <if test="keyword != null">AND (detail LIKE #{keyword} ESCAPE '\' OR target_id LIKE #{keyword} ESCAPE '\')</if>
+            <if test="from != null">AND created_at &gt;= #{from}</if>
+            <if test="to != null">AND created_at &lt; #{to}</if>
+        </where>
+    </sql>
+
+    <select id="search" resultType="com.itaudit.common.ActivityLog">
+        SELECT log_id, user_id, login_id, action, target_type, target_id, detail, client_ip, created_at
+          FROM activity_log
+        <include refid="searchWhere"/>
+         ORDER BY log_id DESC
+         OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM activity_log
+        <include refid="searchWhere"/>
+    </select>
 </mapper>

@@ -26,6 +26,9 @@ public enum Menu {
             Role.AUDIT_LEAD, Role.AUDIT_DEPT, Role.INSPECTOR),
     IMPROVEMENTS("개선사항 관리대장", "/improvements", "F-07",
             Role.AUDIT_LEAD, Role.INSPECTOR, Role.AUDIT_DEPT, Role.VIEWER),
+    // [가정] 감사 로그는 관리자와 자체감사 주관자만 본다 (로그인 IP·사용자 행적이 담겨 있어 담당자·조회자는 제외)
+    AUDIT_LOG("감사 로그", "/audit-log", "F-11",
+            Role.ADMIN, Role.AUDIT_LEAD),
     ADMIN("관리", "/admin", "F-01",
             Role.ADMIN);
 
