@@ -63,8 +63,9 @@ a:hover { color: var(--c-green-deep); }
 }
 .app-header__brand:hover { color: var(--c-green); }
 .brand-mark {
-    width: 32px; height: 32px; flex-shrink: 0;
-    display: block;
+    /* 로고 이미지(232x220)는 정사각형이 아니므로 높이만 맞추고 비율을 유지한다 */
+    height: 32px; width: auto; flex-shrink: 0;
+    display: block; object-fit: contain;
 }
 .app-header__brand small {
     display: block; font-size: 11px; font-weight: 500;

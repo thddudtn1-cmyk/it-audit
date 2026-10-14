@@ -27,7 +27,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> {
                 // /demo-login 은 데모 로그인이 꺼져 있으면 컨트롤러가 없어 404
-                auth.requestMatchers("/login", "/demo-login", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll();
+                auth.requestMatchers("/login", "/demo-login", "/css/**", "/js/**", "/images/**", "/img/**", "/favicon.ico", "/error").permitAll();
                 // 메뉴 정의(Menu)의 역할로 URL 접근을 제한한다
                 for (Menu menu : Menu.values()) {
                     auth.requestMatchers(menu.getPath() + "/**").hasAnyRole(menu.roleNames());
