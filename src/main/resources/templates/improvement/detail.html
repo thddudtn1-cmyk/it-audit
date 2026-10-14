@@ -8,18 +8,18 @@
         <h2 th:text="|${m.kind.label} · ${m.roundShortLabel}|">개선사항</h2>
         <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">예정</span>
         <span class="tag status--done" th:if="${m.closed}">최종확정</span>
-        <span class="tag tag--warn" th:if="${m.reviewPending}">완료 · 주관자 검토 대기</span>
+        <span class="tag tag--warn" th:if="${m.reviewPending}">완료 · IT자체감사 담당자 검토 대기</span>
         <span class="tag tag--danger" th:if="${m.returned}">반려됨</span>
         <span th:replace="~{fragments/common :: due(${m})}"></span>
         <span class="tag" th:text="${m.origin.label}">등록 경위</span>
     </div>
     <div th:replace="~{fragments/layout :: flash}"></div>
     <div class="alert alert--error" th:if="${m.returned}"
-         th:text="|주관자가 완료를 반려하고 ${m.actionResult.label}로 되돌렸습니다. 사유: ${m.returnComment}|">반려</div>
+         th:text="|IT자체감사 담당자가 완료를 반려하고 ${m.actionResult.label}로 되돌렸습니다. 사유: ${m.returnComment}|">반려</div>
     <div class="alert alert--info" th:if="${m.reviewPending and loginUser.role.name() == 'INSPECTOR'}">
-        완료로 보고했습니다. 주관자가 검토 중이라 수정할 수 없고, 주관자가 최종확정하거나 이전 단계로 되돌립니다.</div>
+        완료로 보고했습니다. IT자체감사 담당자가 검토 중이라 수정할 수 없고, IT자체감사 담당자가 최종확정하거나 이전 단계로 되돌립니다.</div>
 
-    <!-- 완료 검토 (주관자): 최종확정 또는 이전 단계로 되돌림 -->
+    <!-- 완료 검토 (IT자체감사 담당자): 최종확정 또는 이전 단계로 되돌림 -->
     <section class="panel review-panel" th:if="${perm.close}">
         <h3>완료 검토</h3>
         <th:block th:if="${m.closed}">

@@ -24,6 +24,11 @@ public class DemoAccountInitializer implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoAccountInitializer.class);
 
+    /** 옛 기본 이름 → 새 기본 이름 (역할 명칭 변경: 관리자→시스템 관리자, 자체감사 주관자→IT자체감사 담당자) */
+    private static final java.util.Map<String, String> RENAMED = java.util.Map.of(
+            "데모 관리자", "데모 시스템 관리자",
+            "데모 주관자", "데모 IT자체감사 담당자");
+
     private final AppUserMapper userMapper;
     private final TeamMapper teamMapper;
     private final PasswordEncoder passwordEncoder;
@@ -49,7 +54,15 @@ public class DemoAccountInitializer implements ApplicationRunner {
             teamMapper.insert(team);
         }
         for (DemoAccounts demo : DemoAccounts.values()) {
-            if (userMapper.findByLoginId(demo.getLoginId()) != null) {
+            AppUser existing = userMapper.findByLoginId(demo.getLoginId());
+            if (existing != null) {
+                // 역할 명칭이 바뀌기 전에 만들어진 데모 계정은 옛 기본 이름일 때만 새 이름으로 맞춘다 (직접 바꾼 이름은 건드리지 않음)
+                String renamed = RENAMED.get(existing.getUserName());
+                if (renamed != null && renamed.equals(demo.getUserName())) {
+                    existing.setUserName(renamed);
+                    existing.setUpdatedAt(now);
+                    userMapper.update(existing);
+                }
                 continue;
             }
             AppUser user = new AppUser();

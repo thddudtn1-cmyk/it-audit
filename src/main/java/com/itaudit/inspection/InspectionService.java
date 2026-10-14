@@ -83,7 +83,7 @@ public class InspectionService implements EvidenceAccess {
             return "감사부서에 제출된 회차라 수정할 수 없습니다.";
         }
         if (!t.item().isInputOpen()) {
-            return "이미 제출한 항목입니다. 주관자가 반려하면 다시 수정할 수 있습니다.";
+            return "이미 제출한 항목입니다. IT자체감사 담당자가 반려하면 다시 수정할 수 있습니다.";
         }
         return null;
     }

@@ -42,7 +42,7 @@ public class DemoLoginController {
         AppUser user = userMapper.findByLoginId(demo.getLoginId());
         // 관리자가 데모 계정을 중지했거나 역할을 바꿨으면 쓰지 않는다
         if (user == null || !user.isActive() || user.getRoleCode() != role) {
-            ra.addFlashAttribute("demoError", role.getLabel() + " 데모 계정을 사용할 수 없습니다. 관리자에게 문의하세요.");
+            ra.addFlashAttribute("demoError", role.getLabel() + " 데모 계정을 사용할 수 없습니다. 시스템 관리자에게 문의하세요.");
             return "redirect:/login";
         }
 

@@ -57,7 +57,7 @@ public class CommentService {
     public Comment add(CommentTarget type, Long targetId, String body, LoginUser user) {
         checkViewable(type, targetId, user);
         if (!canWrite(user)) {
-            throw new BusinessException("코멘트는 주관자·담당자·감사부서만 쓸 수 있습니다.");
+            throw new BusinessException("코멘트는 IT자체감사 담당자·점검 담당자·감사부서만 쓸 수 있습니다.");
         }
         if (!StringUtils.hasText(body)) {
             throw new BusinessException("코멘트 내용을 입력하세요.");

@@ -72,7 +72,7 @@ public class DashboardService {
         for (ActionResult a : ActionResult.values()) {
             int n = raw.stream().filter(r -> "N".equals(r.getLabel()) && a.name().equals(r.getKey()))
                     .mapToInt(CountRow::getValue).sum();
-            rows.add(new CountRow(a.name(), a.getLabel() + (a == ActionResult.DONE ? " (주관자 검토 대기)" : ""), n));
+            rows.add(new CountRow(a.name(), a.getLabel() + (a == ActionResult.DONE ? " (IT자체감사 담당자 검토 대기)" : ""), n));
         }
         int closed = raw.stream().filter(r -> "Y".equals(r.getLabel())).mapToInt(CountRow::getValue).sum();
         rows.add(new CountRow("CLOSED", "최종확정", closed));

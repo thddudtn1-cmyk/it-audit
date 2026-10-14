@@ -85,14 +85,14 @@ class CompletionReviewTest {
 
         // 담당자: 검토 대기 안내, 수정 불가
         mvc.perform(get("/improvements/" + id).with(user(kim)))
-                .andExpect(content().string(Matchers.containsString("완료 · 주관자 검토 대기")))
-                .andExpect(content().string(Matchers.containsString("주관자가 검토 중이라 수정할 수 없고")))
+                .andExpect(content().string(Matchers.containsString("완료 · IT자체감사 담당자 검토 대기")))
+                .andExpect(content().string(Matchers.containsString("IT자체감사 담당자가 검토 중이라 수정할 수 없고")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString(">저장</button>"))));
         mvc.perform(post("/improvements/" + id).with(user(kim)).with(csrf()).param("actionResult", "IN_PROGRESS"))
-                .andExpect(content().string(Matchers.containsString("주관자가 검토 중입니다")));
+                .andExpect(content().string(Matchers.containsString("IT자체감사 담당자가 검토 중입니다")));
         assertThat(current().getActionResult()).isEqualTo(ActionResult.DONE);
         mvc.perform(get("/my-tasks").with(user(kim)))
-                .andExpect(content().string(Matchers.containsString("주관자 검토 중")));
+                .andExpect(content().string(Matchers.containsString("IT자체감사 담당자 검토 중")));
 
         // 주관자: 검토 패널(최종확정·되돌리기), 목록 태그, 대시보드 대기 건수, 필터
         mvc.perform(get("/improvements/" + id).with(user(lead)))
@@ -155,7 +155,7 @@ class CompletionReviewTest {
 
         // 담당자 화면(상세·내 할 일)에 반려 사유, 다시 수정 가능
         mvc.perform(get("/improvements/" + id).with(user(kim)))
-                .andExpect(content().string(Matchers.containsString("주관자가 완료를 반려하고 진행중로 되돌렸습니다")))
+                .andExpect(content().string(Matchers.containsString("IT자체감사 담당자가 완료를 반려하고 진행중로 되돌렸습니다")))
                 .andExpect(content().string(Matchers.containsString("사유: 증빙 캡처가 부족합니다")));
         mvc.perform(get("/my-tasks").with(user(kim)))
                 .andExpect(content().string(Matchers.containsString("반려 사유: 증빙 캡처가 부족합니다")));

@@ -22,7 +22,7 @@
     <form th:if="${canWrite}" th:action="@{/comments}" method="post" class="form">
         <input type="hidden" name="targetType" th:value="${targetType}">
         <input type="hidden" name="targetId" th:value="${targetId}">
-        <textarea name="body" rows="3" maxlength="2000" required placeholder="의견을 남기세요 (주관자·담당자·감사부서)" class="input--block"></textarea>
+        <textarea name="body" rows="3" maxlength="2000" required placeholder="의견을 남기세요 (IT자체감사 담당자·점검 담당자·감사부서)" class="input--block"></textarea>
         <div class="form__actions"><button type="submit" class="button button--primary">코멘트 남기기</button></div>
     </form>
 </section>

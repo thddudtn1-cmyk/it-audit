@@ -79,7 +79,7 @@ public class AdminService {
         AppUser user = getUser(userId);
         if (Objects.equals(userId, actor.getUserId())) {
             if (!form.isActive() || form.getRoleCode() != Role.ADMIN) {
-                throw new BusinessException("본인 계정의 관리자 역할이나 사용여부는 바꿀 수 없습니다.");
+                throw new BusinessException("본인 계정의 시스템 관리자 역할이나 사용여부는 바꿀 수 없습니다.");
             }
         }
         String before = describe(user);

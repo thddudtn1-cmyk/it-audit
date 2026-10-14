@@ -105,7 +105,7 @@
                     </td>
                     <td>
                         <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">예정</span>
-                        <span class="tag tag--warn" th:if="${m.reviewPending}">주관자 검토 중</span>
+                        <span class="tag tag--warn" th:if="${m.reviewPending}">IT자체감사 담당자 검토 중</span>
                         <div class="small error" th:if="${m.returned}" th:text="|반려 사유: ${m.returnComment}|"></div>
                     </td>
                     <td><a class="button" th:href="@{/improvements/{id}(id=${m.improvementId})}" th:text="${m.reviewPending} ? '보기' : '갱신'">갱신</a></td>

@@ -107,7 +107,7 @@ class ReviewFlowTest {
         mvc.perform(get("/my-tasks").with(user(lee)))
                 .andExpect(content().string(Matchers.containsString("반려 사유: 증적 캡처가 흐립니다")));
         mvc.perform(get("/inspections/" + item24).with(user(lee)))
-                .andExpect(content().string(Matchers.containsString("주관자가 반려했습니다")));
+                .andExpect(content().string(Matchers.containsString("IT자체감사 담당자가 반려했습니다")));
         submitInspection(item24, lee);
         assertThat(roundStatus()).isEqualTo(RoundStatus.REVIEW);
         assertThat(activityLogMapper.findByAction(ActivityLogService.ROUND_STATUS))

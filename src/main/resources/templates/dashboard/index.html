@@ -37,7 +37,7 @@
         <div class="kpi" th:classappend="${reviewPendingCount > 0} ? 'kpi--attention'">
             <span class="kpi__label">완료 검토 대기</span>
             <span class="kpi__value" th:text="${reviewPendingCount}">0</span>
-            <a class="kpi__sub" th:href="@{/improvements(reviewPendingOnly=true)}">주관자 최종확정·반려 대기</a>
+            <a class="kpi__sub" th:href="@{/improvements(reviewPendingOnly=true)}">IT자체감사 담당자 최종확정·반려 대기</a>
         </div>
         <div class="kpi" th:classappend="${!#lists.isEmpty(overdue)} ? 'kpi--critical'">
             <span class="kpi__label"><span class="status-icon" aria-hidden="true" th:if="${!#lists.isEmpty(overdue)}">!</span> 개선예정일 경과</span>

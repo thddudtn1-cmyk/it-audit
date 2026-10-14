@@ -78,7 +78,7 @@ public class AuditRequestController {
     public String complete(@PathVariable Long roundId, @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
         try {
             service.completeRound(roundId, actor);
-            ra.addFlashAttribute("message", "적정성 점검을 완료했습니다. 미흡 확정 건은 주관자가 개선사항 관리대장에 등록합니다.");
+            ra.addFlashAttribute("message", "적정성 점검을 완료했습니다. 미흡 확정 건은 IT자체감사 담당자가 개선사항 관리대장에 등록합니다.");
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

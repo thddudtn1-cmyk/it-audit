@@ -13,7 +13,7 @@
     <div th:replace="~{fragments/layout :: flash}"></div>
     <div class="alert alert--info" th:if="${!editable and blockReason != null and loginUser.role.name() == 'INSPECTOR'}" th:text="${blockReason}">안내</div>
     <div class="alert alert--error" th:if="${item.submitStatus.name() == 'REJECTED'}"
-         th:text="|주관자가 반려했습니다. 사유: ${item.reviewComment}|">반려</div>
+         th:text="|IT자체감사 담당자가 반려했습니다. 사유: ${item.reviewComment}|">반려</div>
 
     <!-- 읽기: 회차 항목 정보 (③ 총괄표 항목명) -->
     <section class="panel">

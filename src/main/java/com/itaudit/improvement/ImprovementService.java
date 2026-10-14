@@ -294,12 +294,12 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         if (!p.any()) {
             throw new BusinessException(m.isClosed() ? "최종확정된 건은 수정할 수 없습니다."
                     : m.isReviewPending() && actor.getRole() == Role.INSPECTOR
-                    ? "완료로 보고되어 주관자가 검토 중입니다. 주관자가 이전 단계로 되돌리면 다시 수정할 수 있습니다."
+                    ? "완료로 보고되어 IT자체감사 담당자가 검토 중입니다. IT자체감사 담당자가 이전 단계로 되돌리면 다시 수정할 수 있습니다."
                     : "수정 권한이 없습니다.");
         }
         List<MultipartFile> newFiles = files == null ? List.of() : files.stream().filter(f -> f != null && !f.isEmpty()).toList();
         if (!newFiles.isEmpty() && !p.action()) {
-            throw new BusinessException("증빙자료는 담당자나 주관자만 올릴 수 있습니다.");
+            throw new BusinessException("증빙자료는 점검 담당자나 IT자체감사 담당자만 올릴 수 있습니다.");
         }
         newFiles.forEach(evidenceService::validate);
 
@@ -462,7 +462,7 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
     @Override
     public void checkModify(Long ownerId, LoginUser user) {
         if (!permissions(get(ownerId, user), user).action()) {
-            throw new BusinessException("증빙자료를 바꿀 수 없습니다 (담당자·주관자만, 완료 검토 전까지).");
+            throw new BusinessException("증빙자료를 바꿀 수 없습니다 (점검 담당자·IT자체감사 담당자만, 완료 검토 전까지).");
         }
     }
 

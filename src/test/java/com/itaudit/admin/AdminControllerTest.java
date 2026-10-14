@@ -132,7 +132,7 @@ class AdminControllerTest {
     void 관리자는_본인_계정을_중지하거나_역할을_바꿀_수_없다() throws Exception {
         mvc.perform(post("/admin/users/" + admin.getUserId()).with(user(admin)).with(csrf())
                         .param("userName", "나").param("roleCode", "VIEWER").param("active", "true"))
-                .andExpect(content().string(Matchers.containsString("본인 계정의 관리자 역할")));
+                .andExpect(content().string(Matchers.containsString("본인 계정의 시스템 관리자 역할")));
         assertThat(userMapper.findById(admin.getUserId()).getRoleCode()).isEqualTo(Role.ADMIN);
     }
 

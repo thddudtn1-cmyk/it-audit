@@ -89,7 +89,7 @@ class CommentTest {
         mvc.perform(get("/inspections/" + item23).with(user(kim)))
                 .andExpect(content().string(Matchers.containsString("코멘트 3건")))
                 .andExpect(content().string(Matchers.containsString("증적 캡처를 보완해 주세요")))
-                .andExpect(content().string(Matchers.containsString("자체감사 주관자")));
+                .andExpect(content().string(Matchers.containsString("IT자체감사 담당자")));
         assertThat(activityLogMapper.findByAction(ActivityLogService.COMMENT_ADD)).hasSize(3);
     }
 
@@ -109,7 +109,7 @@ class CommentTest {
                 .andExpect(content().string(Matchers.not(Matchers.containsString("코멘트 남기기"))));
         mvc.perform(post("/comments").with(user(viewer)).with(csrf()).param("targetType", "ROUND_ITEM")
                         .param("targetId", String.valueOf(item23)).param("body", "x"))
-                .andExpect(flash().attribute("errorMessage", "코멘트는 주관자·담당자·감사부서만 쓸 수 있습니다."));
+                .andExpect(flash().attribute("errorMessage", "코멘트는 IT자체감사 담당자·점검 담당자·감사부서만 쓸 수 있습니다."));
         assertThat(mapper.findActive(CommentTarget.ROUND_ITEM, item23)).hasSize(1);
     }
 

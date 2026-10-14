@@ -34,6 +34,7 @@ class DemoLoginTest {
     @Autowired MockMvc mvc;
     @Autowired AppUserMapper userMapper;
     @Autowired ActivityLogMapper activityLogMapper;
+    @Autowired DemoAccountInitializer initializer;
 
     @Test
     void 로그인_화면에_역할_5개_선택_버튼이_보인다() throws Exception {
@@ -102,5 +103,26 @@ class DemoLoginTest {
         mvc.perform(get("/login"))
                 .andExpect(content().string(Matchers.containsString("name=\"loginId\"")))
                 .andExpect(content().string(Matchers.containsString("name=\"password\"")));
+    }
+
+    @Test
+    void 역할_명칭이_바뀌기_전에_만든_데모_계정은_옛_기본_이름일_때만_새_이름으로_맞춘다() throws Exception {
+        AppUser admin = userMapper.findByLoginId("demo-admin");
+        AppUser lead = userMapper.findByLoginId("demo-lead");
+        AppUser viewer = userMapper.findByLoginId("demo-viewer");
+        admin.setUserName("데모 관리자");
+        userMapper.update(admin);
+        lead.setUserName("데모 주관자");
+        userMapper.update(lead);
+        viewer.setUserName("내가 바꾼 이름");   // 직접 바꾼 이름은 건드리지 않는다
+        userMapper.update(viewer);
+
+        initializer.run(new org.springframework.boot.DefaultApplicationArguments());
+
+        assertThat(userMapper.findByLoginId("demo-admin").getUserName()).isEqualTo("데모 시스템 관리자");
+        assertThat(userMapper.findByLoginId("demo-lead").getUserName()).isEqualTo("데모 IT자체감사 담당자");
+        assertThat(userMapper.findByLoginId("demo-viewer").getUserName()).isEqualTo("내가 바꾼 이름");
+        assertThat(Role.ADMIN.getLabel()).isEqualTo("시스템 관리자");
+        assertThat(Role.AUDIT_LEAD.getLabel()).isEqualTo("IT자체감사 담당자");
     }
 }
