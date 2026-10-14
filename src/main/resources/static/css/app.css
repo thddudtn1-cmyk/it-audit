@@ -257,3 +257,54 @@ form.inline { display: inline; }
     border: 1px solid var(--c-border); border-radius: 4px; padding: 8px; }
 .check-list .checkbox { font-weight: normal !important; margin: 0 !important; }
 .form .form--inline input { width: auto; flex: 1; }
+
+/* 대시보드 (F-08) — 막대는 크기만 나타내는 단일 파랑, 구분은 행 이름표로 */
+.viz-root {
+    --series-1: #2a78d6;
+    --series-track: #cde2fb;
+    --critical: #d03b3b;
+}
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: var(--c-surface);
+    border: 1px solid var(--c-border); border-radius: 6px; }
+.kpi__label { color: var(--c-muted); font-size: 13px; }
+.kpi__value { font-size: 32px; font-weight: bold; line-height: 1.2; color: var(--c-text); font-variant-numeric: tabular-nums; }
+.kpi__sub { font-size: 12px; color: var(--c-muted); }
+.kpi--critical { border-color: var(--critical); }
+.kpi--critical .kpi__label { color: var(--critical); font-weight: bold; }
+.status-icon { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; background: var(--critical);
+    color: #fff; font-size: 11px; font-weight: bold; align-items: center; justify-content: center; vertical-align: 1px; }
+
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 0 16px; }
+.chart h3 { margin-bottom: 2px; }
+.chart__note { margin: 0 0 12px; font-size: 12px; color: var(--c-muted); }
+
+.meter-list, .bar-list { list-style: none; margin: 0; padding: 0; }
+.meter-row, .bar-row {
+    position: relative; display: grid; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 4px;
+}
+.meter-row { grid-template-columns: 110px 1fr 44px 92px; }
+.bar-row { grid-template-columns: 130px 1fr 64px; }
+.meter-row:hover, .meter-row:focus, .bar-row:hover, .bar-row:focus { background: #f3f6fa; outline: none; }
+.meter-row__value, .bar-row__value { text-align: right; font-variant-numeric: tabular-nums; color: var(--c-text); font-size: 13px; }
+.bar-row__label { display: flex; flex-direction: column; font-size: 13px; line-height: 1.3; }
+
+/* 미터: 같은 색 계열의 옅은 트랙 + 진한 채움 */
+.meter { position: relative; height: 10px; background: var(--series-track); border-radius: 4px; overflow: hidden; }
+.meter__fill { position: absolute; inset: 0 auto 0 0; background: var(--series-1); border-radius: 0 4px 4px 0; }
+
+/* 가로 막대: 기준선(왼쪽)에 붙고 끝만 둥글게 */
+.bar-track { height: 12px; background: var(--series-track); border-radius: 0 4px 4px 0; }
+.bar-track--plain { background: transparent; border-left: 1px solid var(--c-border); }
+.bar { display: block; height: 100%; min-width: 0; background: var(--series-1); border-radius: 0 4px 4px 0; }
+
+/* 마우스·키보드 포커스 툴팁 */
+[data-tip]:hover::after, [data-tip]:focus::after {
+    content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%);
+    z-index: 10; white-space: nowrap; padding: 5px 9px; border-radius: 4px; font-size: 12px;
+    background: #1f2329; color: #fff; pointer-events: none;
+}
+
+/* 화면 확인 후 보정: 긴 본문 열 최소 폭, 이름표·태그가 칸 너비로 늘어나지 않게 */
+.table--checklist td.pre:not(.small) { min-width: 240px; }
+.bar-row__label .result, .meter-row .tag { justify-self: start; align-self: flex-start; }

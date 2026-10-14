@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itaudit.dashboard.DashboardMapper">
+
+    <!-- 제출 대상 = 제외·회신불필요가 아닌 항목 (회차 목록의 제출률과 같은 기준) -->
+    <select id="findAssigneeStats" resultType="com.itaudit.dashboard.CountRow">
+        SELECT COALESCE(u.user_name, '미배정') AS label,
+               t.team_name AS sub_label,
+               COUNT(*) AS total,
+               SUM(CASE WHEN i.submit_status IN ('SUBMITTED', 'CONFIRMED') THEN 1 ELSE 0 END) AS "value"
+          FROM round_item i
+          LEFT JOIN app_user u ON u.user_id = i.assignee_id
+          LEFT JOIN team t ON t.team_code = i.team_code
+         WHERE i.round_id = #{roundId} AND i.excluded_yn = 'N' AND i.no_reply_yn = 'N'
+         GROUP BY u.user_name, t.team_name
+         ORDER BY CASE WHEN u.user_name IS NULL THEN 1 ELSE 0 END, t.team_name, u.user_name
+    </select>
+
+    <select id="findResultStats" resultType="com.itaudit.dashboard.CountRow">
+        SELECT i.inspection_result AS "key", COUNT(*) AS "value"
+          FROM round_item i
+         WHERE i.round_id = #{roundId} AND i.excluded_yn = 'N'
+         GROUP BY i.inspection_result
+    </select>
+
+    <select id="findActionStats" resultType="com.itaudit.dashboard.CountRow">
+        SELECT m.action_result AS "key", m.closed_yn AS label, COUNT(*) AS "value"
+          FROM improvement m
+         GROUP BY m.action_result, m.closed_yn
+    </select>
+</mapper>

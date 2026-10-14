@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('대시보드')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide viz-root">
+    <h2>현황 대시보드</h2>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form method="get" th:action="@{/dashboard}" class="filter-bar" th:if="${!#lists.isEmpty(rounds)}">
+        <label>회차
+            <select name="roundId" onchange="this.form.submit()">
+                <option th:each="r : ${rounds}" th:value="${r.roundId}" th:selected="${round != null and r.roundId == round.roundId}"
+                        th:text="|${r.label} (${r.status.label})|">2026년 3분기</option>
+            </select>
+        </label>
+        <noscript><button type="submit" class="button">조회</button></noscript>
+    </form>
+
+    <!-- 핵심 숫자 -->
+    <section class="kpi-row">
+        <div class="kpi">
+            <span class="kpi__label">진행 중 회차</span>
+            <span class="kpi__value" th:text="${#lists.size(activeRounds)}">1</span>
+            <span class="kpi__sub">완료 전 회차</span>
+        </div>
+        <div class="kpi" th:if="${round != null}">
+            <span class="kpi__label" th:text="|${round.label} 제출률|">제출률</span>
+            <span class="kpi__value" th:text="|${round.submitRate}%|">50%</span>
+            <span class="kpi__sub" th:text="|${round.submittedCount} / ${round.submitTargetCount}건 · ${round.status.label}|">7/14</span>
+        </div>
+        <div class="kpi">
+            <span class="kpi__label">미종결 개선·권고</span>
+            <span class="kpi__value" th:text="${openCount}">5</span>
+            <a class="kpi__sub" th:href="@{/improvements}">관리대장 보기</a>
+        </div>
+        <div class="kpi" th:classappend="${!#lists.isEmpty(overdue)} ? 'kpi--critical'">
+            <span class="kpi__label"><span class="status-icon" aria-hidden="true" th:if="${!#lists.isEmpty(overdue)}">!</span> 개선예정일 경과</span>
+            <span class="kpi__value" th:text="${#lists.size(overdue)}">2</span>
+            <span class="kpi__sub" th:text="|7일 이내 임박 ${#lists.size(dueSoon)}건|">임박 1건</span>
+        </div>
+    </section>
+
+    <div class="dash-grid">
+        <!-- 회차별 제출률 -->
+        <section class="panel chart">
+            <h3>회차별 담당자 제출률</h3>
+            <p class="chart__note">제출 대상(제외·회신불필요 제외) 중 제출·확인된 비율</p>
+            <ul class="meter-list" th:if="${!#lists.isEmpty(recentRounds)}">
+                <li th:each="r : ${recentRounds}" class="meter-row" tabindex="0"
+                    th:attr="data-tip=|${r.label} · ${r.status.label} · 제출 ${r.submittedCount}/${r.submitTargetCount}건 · 확인 ${r.confirmedCount}건|">
+                    <a class="meter-row__label" th:href="@{/rounds/{id}(id=${r.roundId})}" th:text="${r.label}">2026년 3분기</a>
+                    <span class="meter" role="img" th:attr="aria-label=|${r.label} 제출률 ${r.submitRate}%|">
+                        <span class="meter__fill" th:style="|width: ${r.submitRate}%|"></span>
+                    </span>
+                    <span class="meter-row__value" th:text="|${r.submitRate}%|">50%</span>
+                    <span class="tag" th:classappend="|status--${r.status.name().toLowerCase()}|" th:text="${r.status.label}">작성중</span>
+                </li>
+            </ul>
+            <p class="empty" th:if="${#lists.isEmpty(recentRounds)}">회차가 없습니다.</p>
+        </section>
+
+        <!-- 담당자별 제출률 -->
+        <section class="panel chart" th:if="${round != null}">
+            <h3 th:text="|담당자별 제출 현황 · ${round.label}|">담당자별</h3>
+            <p class="chart__note">막대 = 담당자별 제출률, 숫자 = 제출 / 대상</p>
+            <ul class="bar-list" th:if="${!#lists.isEmpty(assignees)}">
+                <li th:each="a : ${assignees}" class="bar-row" tabindex="0"
+                    th:attr="data-tip=|${a.label}${a.subLabel != null ? ' (' + a.subLabel + ')' : ''} · 제출 ${a.value}/${a.total}건 · ${a.rate}%|">
+                    <span class="bar-row__label">
+                        <span th:text="${a.label}">담당자</span>
+                        <small class="muted" th:if="${a.subLabel}" th:text="${a.subLabel}">팀</small>
+                    </span>
+                    <span class="bar-track"><span class="bar" th:style="|width: ${a.rate}%|"></span></span>
+                    <span class="bar-row__value" th:text="|${a.value} / ${a.total}|">1/2</span>
+                </li>
+            </ul>
+            <p class="empty" th:if="${#lists.isEmpty(assignees)}">제출 대상 항목이 없습니다.</p>
+        </section>
+
+        <!-- 점검결과 분포 -->
+        <section class="panel chart" th:if="${round != null}">
+            <h3 th:text="|점검결과별 건수 · ${round.label}|">점검결과</h3>
+            <p class="chart__note">제외 항목을 뺀 점검 대상 기준 (담당자 입력값)</p>
+            <ul class="bar-list">
+                <li th:each="r : ${results}" class="bar-row" tabindex="0"
+                    th:attr="data-tip=|${r.label} ${r.value}건|">
+                    <span class="bar-row__label">
+                        <span th:if="${r.key != 'NONE'}" class="result" th:classappend="|result--${#strings.toLowerCase(r.key)}|" th:text="${r.label}">정상</span>
+                        <span th:if="${r.key == 'NONE'}" class="muted" th:text="${r.label}">미입력</span>
+                    </span>
+                    <span class="bar-track bar-track--plain"><span class="bar" th:style="|width: ${r.value * 100 / resultMax}%|"></span></span>
+                    <span class="bar-row__value" th:text="|${r.value}건|">3건</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 조치 결과별 건수 -->
+        <section class="panel chart">
+            <h3>개선사항·권고사항 조치 결과</h3>
+            <p class="chart__note">전체 회차 누적 · 종결 전 건은 조치 결과별, 종결 건은 따로</p>
+            <ul class="bar-list">
+                <li th:each="a : ${actions}" class="bar-row" tabindex="0" th:attr="data-tip=|${a.label} ${a.value}건|">
+                    <span class="bar-row__label" th:text="${a.label}">예정</span>
+                    <span class="bar-track bar-track--plain"><span class="bar" th:style="|width: ${a.value * 100 / actionMax}%|"></span></span>
+                    <span class="bar-row__value" th:text="|${a.value}건|">2건</span>
+                </li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- 개선예정일 경과·임박 목록 -->
+    <section class="panel">
+        <h3>
+            <span class="status-icon" aria-hidden="true" th:if="${!#lists.isEmpty(overdue)}">!</span>
+            <span th:text="|개선예정일 경과 ${#lists.size(overdue)}건 · 7일 이내 임박 ${#lists.size(dueSoon)}건|">경과 목록</span>
+        </h3>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr><th>구분</th><th>감사 시기</th><th class="col-team">담당부서/담당자</th><th>개선 방안</th><th>개선예정일</th><th>조치 결과</th><th class="col-act"></th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${overdue}" class="row--error">
+                    <td th:text="${m.kind.label}">개선사항</td>
+                    <td th:text="${m.roundShortLabel}">2026 3Q</td>
+                    <td th:text="${m.ownerLabel}">팀 / 담당자</td>
+                    <td class="pre small" th:text="${m.improvementPlan} ?: '-'">방안</td>
+                    <td><span th:text="${m.plannedDate}">2026-09-30</span> <span th:replace="~{fragments/common :: due(${m})}"></span></td>
+                    <td th:text="${m.actionResult.label}">진행중</td>
+                    <td><a th:href="@{/improvements/{id}(id=${m.improvementId})}">보기</a></td>
+                </tr>
+                <tr th:each="m : ${dueSoon}" class="row--highlight">
+                    <td th:text="${m.kind.label}">개선사항</td>
+                    <td th:text="${m.roundShortLabel}">2026 3Q</td>
+                    <td th:text="${m.ownerLabel}">팀 / 담당자</td>
+                    <td class="pre small" th:text="${m.improvementPlan} ?: '-'">방안</td>
+                    <td><span th:text="${m.plannedDate}">2026-10-20</span> <span th:replace="~{fragments/common :: due(${m})}"></span></td>
+                    <td th:text="${m.actionResult.label}">예정</td>
+                    <td><a th:href="@{/improvements/{id}(id=${m.improvementId})}">보기</a></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(overdue) and #lists.isEmpty(dueSoon)}">
+                    <td colspan="7" class="empty">개선예정일이 지났거나 임박한 건이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>
