@@ -39,6 +39,7 @@
         </label>
         <noscript><button type="submit" class="button">조회</button></noscript>
         <span class="toolbar__actions filter-bar__right">
+            <a class="button" th:href="@{/improvements/export}" title="개선사항·권고사항 두 시트, 종결 포함 전체">엑셀 내보내기</a>
             <a sec:authorize="hasRole('AUDIT_LEAD')" th:unless="${rec}" class="button button--primary" th:href="@{/improvements/findings}">미흡 확정 건에서 등록</a>
             <a sec:authorize="hasAnyRole('AUDIT_DEPT','AUDIT_LEAD')" th:if="${rec}" class="button button--primary" th:href="@{/improvements/recommendations/new}">권고사항 등록</a>
         </span>

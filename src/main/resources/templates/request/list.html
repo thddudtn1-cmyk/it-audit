@@ -25,6 +25,9 @@
             <span><strong>판정 대기</strong> <span th:text="|${openCount}건|">0건</span></span>
             <span><strong>미흡 확정</strong> <span th:text="|${findingCount}건|">0건</span></span>
             <span><strong>회차 상태</strong> <span th:text="${round.status.label}">감사부서 제출</span></span>
+            <span class="toolbar__actions">
+                <a class="button" th:href="@{/requests/export(roundId=${round.roundId})}">엑셀 내보내기</a>
+            </span>
             <span class="toolbar__actions" sec:authorize="hasRole('AUDIT_DEPT')" th:if="${round.status.name() == 'SUBMITTED'}">
                 <a class="button" th:href="@{/rounds/{id}(id=${round.roundId})}">총괄표 보기</a>
                 <a class="button button--primary" th:href="@{/requests/new(roundId=${round.roundId})}">요청 추가</a>

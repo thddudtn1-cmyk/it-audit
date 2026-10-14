@@ -36,6 +36,7 @@
         </span>
         <span class="toolbar__actions">
             <a class="button" th:href="@{/checklist/upload(year=${year})}">엑셀 업로드</a>
+            <a class="button" th:if="${totalCount > 0}" th:href="@{/checklist/export(year=${year})}">엑셀 내보내기</a>
             <a class="button" th:href="@{/checklist/items/new(year=${year})}">항목 추가</a>
         </span>
     </div>
