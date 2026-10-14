@@ -25,5 +25,9 @@ services:
       # 실제 데이터를 넣기 전에는 "false" 로 바꾼다.
       - key: DEMO_LOGIN_ENABLED
         value: "true"
+      # 데모 서버는 재배포로 DB 가 비어도 시연용 데이터(체크리스트·회차·개선사항 등)가 자동으로 다시 채워진다.
+      # DB 가 비어 있을 때만 만들고, 데이터가 있으면 건드리지 않는다. 실제 운영에서는 "false".
+      - key: DEMO_DATA_ENABLED
+        value: "true"
       - key: COOKIE_SECURE
         value: "true"

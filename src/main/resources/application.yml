@@ -47,6 +47,10 @@ app:
   # 인터넷에 공개되는 서버·사내 운영에서는 반드시 false 로 끈다 (DEMO_LOGIN_ENABLED=false).
   demo-login:
     enabled: ${DEMO_LOGIN_ENABLED:true}
+  # 시연용 데이터: 앱이 빈 DB 로 뜰 때 체크리스트·회차 3개·점검 입력·적정성 점검·개선사항·코멘트를 한 번만 만든다.
+  # DB 가 재배포마다 초기화되는 데모 서버용. demo-login 이 켜져 있어야 한다 (DEMO_DATA_ENABLED=true).
+  demo-data:
+    enabled: ${DEMO_DATA_ENABLED:false}
   # 최초 기동 시 관리자 계정이 하나도 없으면 생성한다. 첫 로그인 후 비밀번호 변경이 강제된다.
   init-admin:
     login-id: admin
