@@ -460,3 +460,9 @@ form.inline { display: inline; }
 .col-review { width: 150px; }
 .review-cell .reject-box { margin-top: 6px; }
 .row--review td { background: #fff8e6; }
+
+/* 행을 눌러 상세로 이동 (총괄표·개선사항 관리대장) */
+tr.row--clickable { cursor: pointer; }
+tr.row--clickable:hover td, tr.row--clickable:focus td { background: #f3f8f6; }
+tr.row--clickable:focus { outline: 2px solid var(--c-primary); outline-offset: -2px; }
+tr.row--review:hover td { background: #fff1cc; }

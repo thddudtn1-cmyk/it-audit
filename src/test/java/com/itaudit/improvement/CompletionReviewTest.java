@@ -214,49 +214,57 @@ class CompletionReviewTest {
         assertThat(current().isReviewPending()).isTrue();
     }
 
-    // ---------- 관리대장 목록에서 바로 검토 ----------
+    // ---------- 관리대장 목록 → 상세에서 검토 ----------
 
     @Test
-    void 관리대장_목록에서_완료된_건에_검토완료와_반려_버튼이_보인다() throws Exception {
-        // 진행중: 버튼 없음
+    void 목록_행을_누르면_상세로_이동하고_검토_대기_건은_검토하기_링크가_보인다() throws Exception {
+        // 진행중: 행은 클릭 가능하지만 검토하기 링크는 없다
         String before = mvc.perform(get("/improvements").with(user(lead))).andReturn().getResponse().getContentAsString();
-        assertThat(before).contains("완료 검토").doesNotContain("검토완료(최종확정)");
+        assertThat(before).contains("완료 검토").contains("class=\"row--clickable\"")
+                .contains("data-href=\"/improvements/" + id + "\"").doesNotContain("검토하기");
 
         mvc.perform(complete(kim));
         String html = mvc.perform(get("/improvements").with(user(lead))).andReturn().getResponse().getContentAsString();
-        assertThat(html).contains("검토완료(최종확정)").contains("action=\"/improvements/" + id + "/close\"")
-                .contains("action=\"/improvements/" + id + "/return\"").contains("name=\"from\" value=\"list\"")
-                .contains("row--review");
+        assertThat(html).contains("data-href=\"/improvements/" + id + "\"").contains("검토하기").contains("row--review");
+        // 목록에는 인라인 최종확정·반려 폼이 없다 (검토는 상세 화면에서)
+        assertThat(html).doesNotContain("action=\"/improvements/" + id + "/close\"")
+                .doesNotContain("action=\"/improvements/" + id + "/return\"").doesNotContain("검토완료(최종확정)");
+        assertThat(html).contains("round.js");
 
-        // 다른 역할 목록에는 검토 열·버튼이 없다
+        // 다른 역할 목록에도 행 이동은 되지만 검토 열·링크는 없다 (담당자는 본인 건 상세로)
         for (LoginUser u : List.of(kim, dept, testUsers.user("cr-viewer2", Role.VIEWER))) {
             String other = mvc.perform(get("/improvements").with(user(u))).andReturn().getResponse().getContentAsString();
-            assertThat(other).doesNotContain("검토완료(최종확정)").doesNotContain("완료 검토</th>");
+            assertThat(other).contains("data-href=\"/improvements/" + id + "\"")
+                    .doesNotContain("검토하기").doesNotContain("완료 검토</th>");
         }
     }
 
     @Test
-    void 목록에서_반려하면_목록으로_돌아오고_사유가_저장된다() throws Exception {
+    void 상세로_들어가_최종확정할_수_있다() throws Exception {
         mvc.perform(complete(kim));
-        mvc.perform(post("/improvements/" + id + "/return").with(user(lead)).with(csrf())
-                        .param("from", "list").param("target", "IN_PROGRESS").param("reason", "목록에서 반려"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements?kind=IMPROVEMENT"))
-                .andExpect(flash().attribute("message", Matchers.containsString("이전 단계(진행중)로 되돌렸습니다")));
-        assertThat(current().getReturnComment()).isEqualTo("목록에서 반려");
-        mvc.perform(get("/improvements").with(user(lead)))
-                .andExpect(content().string(Matchers.containsString("반려됨")));
+        String detail = mvc.perform(get("/improvements/" + id).with(user(lead))).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(detail).contains("action=\"/improvements/" + id + "/close\"")
+                .contains("action=\"/improvements/" + id + "/return\"").contains(">최종확정</button>").contains(">되돌리기</button>");
+
+        mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()).param("comment", "확인"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements/" + id))
+                .andExpect(flash().attribute("message", "최종확정했습니다."));
+        assertThat(current().isClosed()).isTrue();
+        // 최종확정된 건의 목록 행에는 '검토하기'가 없고 '최종확정' 표시
+        mvc.perform(get("/improvements").param("closed", "ALL").with(user(lead)))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("검토하기"))))
+                .andExpect(content().string(Matchers.containsString("최종확정")));
     }
 
     @Test
-    void 목록에서_검토완료하면_목록으로_돌아오고_최종확정된다() throws Exception {
+    void 상세로_들어가_반려할_수_있다() throws Exception {
         mvc.perform(complete(kim));
-        mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()).param("from", "list"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements?kind=IMPROVEMENT"))
-                .andExpect(flash().attribute("message", "최종확정했습니다."));
-        assertThat(current().isClosed()).isTrue();
-        // 상세에서 처리하면 기존처럼 상세로
-        mvc.perform(post("/improvements/" + id + "/reopen").param("reason", "x").with(user(lead)).with(csrf()));
-        mvc.perform(post("/improvements/" + id + "/close").with(user(lead)).with(csrf()))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements/" + id));
+        mvc.perform(post("/improvements/" + id + "/return").with(user(lead)).with(csrf())
+                        .param("target", "IN_PROGRESS").param("reason", "상세에서 반려"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/improvements/" + id))
+                .andExpect(flash().attribute("message", Matchers.containsString("이전 단계(진행중)로 되돌렸습니다")));
+        assertThat(current().getReturnComment()).isEqualTo("상세에서 반려");
+        mvc.perform(get("/improvements").with(user(lead))).andExpect(content().string(Matchers.containsString("반려됨")));
     }
 }

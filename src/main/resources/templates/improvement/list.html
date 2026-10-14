@@ -73,7 +73,8 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="m, s : ${items}" th:classappend="${m.closed} ? 'row--inactive' : (${m.reviewPending} ? 'row--review' : (${m.overdue} ? 'row--error' : (${m.dueSoon} ? 'row--highlight' : '')))">
+            <tr th:each="m, s : ${items}" class="row--clickable" tabindex="0"
+                th:attr="data-href=@{/improvements/{id}(id=${m.improvementId})}" th:classappend="${m.closed} ? 'row--inactive' : (${m.reviewPending} ? 'row--review' : (${m.overdue} ? 'row--error' : (${m.dueSoon} ? 'row--highlight' : '')))">
                 <td class="num"><a th:href="@{/improvements/{id}(id=${m.improvementId})}" th:text="${s.count}">1</a></td>
                 <td><div th:each="x : ${m.items}" class="stack" th:text="${x.auditArea.label}">영역</div></td>
                 <td><div th:each="x : ${m.items}" class="stack" th:text="${x.auditItem}">항목</div></td>
@@ -99,23 +100,8 @@
                 <td class="pre small" th:text="${m.actionStatus}">현황</td>
                 <td class="num" th:text="${m.evidenceCount > 0} ? |${m.evidenceCount}건| : '-'">-</td>
                 <td class="review-cell" sec:authorize="hasRole('AUDIT_LEAD')">
-                    <th:block th:if="${m.reviewPending}">
-                        <form th:action="@{/improvements/{id}/close(id=${m.improvementId})}" method="post" class="inline">
-                            <input type="hidden" name="from" value="list">
-                            <button type="submit" class="button button--primary button--small"
-                                    title="조치 결과 '완료'를 확인하고 최종확정합니다">검토완료(최종확정)</button>
-                        </form>
-                        <details class="reject-box">
-                            <summary class="small">반려</summary>
-                            <form th:action="@{/improvements/{id}/return(id=${m.improvementId})}" method="post">
-                                <input type="hidden" name="from" value="list">
-                                <label class="checkbox"><input type="radio" name="target" value="IN_PROGRESS" checked> 진행중으로</label>
-                                <label class="checkbox"><input type="radio" name="target" value="PLANNED"> 예정으로</label>
-                                <textarea name="reason" rows="2" maxlength="1000" required placeholder="반려 사유 (담당자에게 보입니다)"></textarea>
-                                <button type="submit" class="button button--danger button--small">반려</button>
-                            </form>
-                        </details>
-                    </th:block>
+                    <a class="button button--primary button--small" th:if="${m.reviewPending}"
+                       th:href="@{/improvements/{id}(id=${m.improvementId})}" title="상세 화면에서 검토 후 최종확정 또는 반려합니다">검토하기</a>
                     <a class="small" th:unless="${m.reviewPending}" th:href="@{/improvements/{id}(id=${m.improvementId})}">상세</a>
                 </td>
             </tr>
@@ -123,8 +109,8 @@
             </tbody>
         </table>
     </div>
-    <p class="small muted">붉은 행: 개선예정일 경과 · 노란 행: 7일 이내 임박 · 조치 결과가 '완료'가 되면 주관자가 검토해 최종확정하거나 이전 단계로 되돌립니다 · 최종확정 전 건은 분기가 바뀌어도 계속 표시됩니다.</p>
+    <p class="small muted">붉은 행: 개선예정일 경과 · 노란 행: 7일 이내 임박 · 행을 누르면 상세 화면으로 이동합니다 · 조치 결과가 '완료'가 되면 주관자가 상세 화면에서 검토해 최종확정하거나 반려합니다 · 최종확정 전 건은 분기가 바뀌어도 계속 표시됩니다.</p>
 </main>
-
+<script th:src="@{/js/round.js}"></script>
 </body>
 </html>
