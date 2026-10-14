@@ -131,33 +131,47 @@ public class ExcelExportService {
         }
     }
 
-    // ---------- ④ 적정성 점검 사전요청자료 ----------
+    // ---------- ④ 적정성 점검 ----------
+    // 프로세스 변경: ④ 는 감사부서가 제출된 분기 점검 내역을 항목별로 검토한 결과(보완자료 요청 포함)를 담는다.
 
     public ExcelFile requests(Long roundId, LoginUser user) {
         AuditRound round = requestService.getRound(roundId);
-        List<AuditRequest> list = requestService.findByRound(roundId);
+        List<AuditRequestService.Target> targets = requestService.findTargets(roundId);
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             SheetWriter w = new SheetWriter(wb, round.getRoundYear() + "_" + round.getQuarter() + "Q");
-            w.title(0, 1, "■ " + round.getRoundYear() + "년 " + round.getQuarter() + "분기 IT자체감사 적정성 점검 사전요청자료");
-            w.header(2, 1, List.of("No", "감사 영역", "평가항목", "점검방식", "사전요청자료", "비고"),
-                    new int[]{5, 22, 32, 50, 45, 40});
+            w.title(0, 1, "■ " + round.getRoundYear() + "년 " + round.getQuarter() + "분기 IT자체감사 적정성 점검");
+            w.header(2, 1, List.of("No", "감사 영역", "평가항목", "점검방식", "점검결과", "보완 요청자료", "비고",
+                    "적정성 판정", "미흡 내용·검토 의견"), new int[]{5, 22, 32, 50, 11, 40, 40, 16, 45});
             int r = 3;
             int no = 1;
-            for (AuditRequest q : list) {
+            for (AuditRequestService.Target t : targets) {
+                RoundItem i = t.item();
+                AuditRequest q = t.review();
                 w.cell(r, 1, no++, true, false);
-                w.cell(r, 2, q.getAuditArea().getLabel(), false, false);
-                w.cell(r, 3, q.getAuditItem(), false, false);
-                w.cell(r, 4, q.getItemDetail(), false, false);
-                w.cell(r, 5, material(q.getRequestMaterial(), q.getSampleSize()), false, false);
-                w.cell(r, 6, q.getRemark(), false, false);
+                w.cell(r, 2, i.getAuditArea().getLabel(), false, false);
+                w.cell(r, 3, i.getAuditItem(), false, false);
+                w.cell(r, 4, i.getItemDetail(), false, false);
+                w.cell(r, 5, i.getInspectionResult() == null ? null : i.getInspectionResult().getLabel(), true, false);
+                w.cell(r, 6, q == null ? null : material(q.getRequestMaterial(), q.getSampleSize()), false, false);
+                w.cell(r, 7, q == null ? null : q.getRemark(), false, false);
+                w.cell(r, 8, t.state().getLabel() + (q != null && q.getConfirmedResult() != null
+                        ? " (" + q.getConfirmedResult().getLabel() + ")" : ""), true, false);
+                w.cell(r, 9, joinLines(q == null ? null : q.getFindingDetail(), q == null ? null : q.getDeptComment()), false, false);
                 r++;
             }
-            w.mergeRuns(2, 3, list.stream().map(AuditRequest::getAuditArea).toList());
-            return done(wb, "4_" + round.getRoundYear() + "_" + round.getQuarter() + "분기_적정성점검_사전요청자료.xlsx",
-                    "사전요청자료 " + round.getLabel(), user);
+            w.mergeRuns(2, 3, targets.stream().map(t -> t.item().getAuditArea()).toList());
+            return done(wb, "4_" + round.getRoundYear() + "_" + round.getQuarter() + "분기_적정성점검.xlsx",
+                    "적정성 점검 " + round.getLabel(), user);
         } catch (IOException e) {
             throw new BusinessException("엑셀 파일을 만들지 못했습니다.");
         }
+    }
+
+    private static String joinLines(String a, String b) {
+        if (a == null) {
+            return b;
+        }
+        return b == null ? a : a + "\n" + b;
     }
 
     // ---------- ⑤ IT자체감사 개선사항 관리대장 (시트 2개) ----------

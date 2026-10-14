@@ -12,7 +12,7 @@ public interface RoundPurgeMapper {
     /** 이 회차 항목에 연결된 개선사항 연결 수 (다른 회차의 개선사항이 이 항목을 가리키는 경우 포함) */
     int countImprovementLinks(@Param("roundId") Long roundId);
 
-    /** 이 회차·그 사전요청자료의 증적 파일 경로 (논리 삭제된 것 포함, 물리 파일이 남아 있으므로) */
+    /** 이 회차·그 적정성 점검 기록의 증적 파일 경로 (논리 삭제된 것 포함, 물리 파일이 남아 있으므로) */
     List<String> findEvidencePaths(@Param("roundId") Long roundId);
 
     int deleteComments(@Param("roundId") Long roundId);

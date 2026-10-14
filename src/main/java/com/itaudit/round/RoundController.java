@@ -47,7 +47,7 @@ public class RoundController {
                          @AuthenticationPrincipal LoginUser actor, RedirectAttributes ra) {
         try {
             int count = deleteService.delete(roundIds, actor);
-            ra.addFlashAttribute("message", "회차 " + count + "건과 그 안의 점검 입력·증적·사전요청자료를 삭제했습니다.");
+            ra.addFlashAttribute("message", "회차 " + count + "건과 그 안의 점검 입력·증적·적정성 점검 기록을 삭제했습니다.");
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMessage", e.getMessage());
         }

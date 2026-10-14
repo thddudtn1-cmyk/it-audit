@@ -30,9 +30,15 @@ import com.itaudit.round.RoundMapper;
 import com.itaudit.round.RoundStatus;
 
 /**
- * 감사부서 적정성 점검 (F-06): 사전요청자료 요청 → 담당자 자료·비고 제출 → 미흡 확정·이상 없음·보완 요청 → 적정성 점검 완료.
- * [가정] 오픈 이슈 '감사부서 직접 로그인 여부'는 감사부서가 시스템에 직접 로그인해 요청·판정하는 쪽으로 구현했다.
- *        주관자·조회자는 열람만 한다.
+ * 감사부서 적정성 점검 (F-06).
+ *
+ * 흐름: 주관자가 분기 점검을 감사부서에 제출 → 감사부서가 제출된 분기 점검 내역(점검결과·내용·증적)을 항목별로 검토 →
+ *       적정 / 미흡 확정 / 보완자료 요청 → (보완자료 요청 시) 담당자가 보완자료·비고 제출 → 감사부서 재검토 →
+ *       모든 항목 검토 후 적정성 점검 완료.
+ *
+ * 적정성 점검 대상 = 회차의 점검 대상 항목 중 회신불필요가 아닌 항목 (점검 내역이 있는 항목).
+ * audit_request 행은 감사부서가 항목에 처음 손댈 때(판정 또는 보완 요청) 만들어진다. 행이 없으면 '미검토'다.
+ * [가정] 오픈 이슈 '감사부서 직접 로그인 여부'는 감사부서가 시스템에 직접 로그인해 검토하는 쪽으로 구현했다.
  */
 @Service
 public class AuditRequestService implements EvidenceAccess {
@@ -49,6 +55,20 @@ public class AuditRequestService implements EvidenceAccess {
         String blockReason(Long roundItemId);
     }
 
+    /** 적정성 점검 대상 항목 1건: 분기 점검 내역(item) + 감사부서 검토 행(review, 없으면 null) */
+    public record Target(RoundItem item, AuditRequest review) {
+        public ReviewState state() {
+            return ReviewState.of(review);
+        }
+    }
+
+    /** 상세 화면 묶음 */
+    public record TargetView(RoundItem item, AuditRound round, AuditRequest review) {
+        public ReviewState state() {
+            return ReviewState.of(review);
+        }
+    }
+
     public AuditRequestService(AuditRequestMapper mapper, RoundMapper roundMapper,
                                @Lazy EvidenceService evidenceService, ActivityLogService activityLog,
                                ObjectProvider<FindingLinkCheck> findingLinkChecks) {
@@ -61,7 +81,7 @@ public class AuditRequestService implements EvidenceAccess {
 
     // ---------- 조회 ----------
 
-    /** 사전요청자료를 다룰 수 있는 회차 = 감사부서에 제출된 회차 */
+    /** 적정성 점검을 할 수 있는 회차 = 감사부서에 제출된 회차 */
     public List<AuditRound> findRounds() {
         return roundMapper.findRounds(List.of(RoundStatus.SUBMITTED, RoundStatus.DONE));
     }
@@ -74,94 +94,56 @@ public class AuditRequestService implements EvidenceAccess {
         return round;
     }
 
-    public List<AuditRequest> findByRound(Long roundId) {
-        return mapper.findByRound(roundId);
-    }
-
-    public List<AuditRequest> findMine(LoginUser user) {
-        return mapper.findByAssignee(user.getUserId());
-    }
-
-    /** 요청 후보: 회차의 점검 대상 항목 (이미 요청한 항목 표시용 맵 포함) */
-    public record Candidate(RoundItem item, AuditRequest existing) {
-    }
-
-    public List<Candidate> findCandidates(Long roundId) {
-        Map<Long, AuditRequest> existing = mapper.findByRound(roundId).stream()
+    /** 이 회차의 적정성 점검 대상 항목과 검토 상태 (순번 순) */
+    public List<Target> findTargets(Long roundId) {
+        Map<Long, AuditRequest> reviews = mapper.findByRound(roundId).stream()
                 .collect(Collectors.toMap(AuditRequest::getRoundItemId, Function.identity()));
-        List<Candidate> result = new ArrayList<>();
+        List<Target> result = new ArrayList<>();
         for (RoundItem item : roundMapper.findItems(roundId)) {
-            if (!item.isExcluded()) {
-                result.add(new Candidate(item, existing.get(item.getRoundItemId())));
+            if (isTarget(item)) {
+                result.add(new Target(item, reviews.get(item.getRoundItemId())));
             }
         }
         return result;
     }
 
+    private static boolean isTarget(RoundItem item) {
+        return !item.isExcluded() && !item.isNoReply();
+    }
+
+    public List<AuditRequest> findByRound(Long roundId) {
+        return mapper.findByRound(roundId);
+    }
+
+    /** 담당자에게 온 보완자료 요청 */
+    public List<AuditRequest> findMine(LoginUser user) {
+        return mapper.findByAssignee(user.getUserId());
+    }
+
     public AuditRequest getForView(Long requestId, LoginUser user) {
         AuditRequest r = load(requestId);
-        checkViewable(r, user);
+        checkViewable(r.getRoundId(), r.getAssigneeId(), r.getRoundStatus(), user);
         return r;
     }
 
-    // ---------- 요청 (감사부서) ----------
-
-    @Transactional
-    public int create(RequestCreateForm form, LoginUser actor) {
-        AuditRound round = getRound(form.getRoundId());
-        if (round.getStatus() != RoundStatus.SUBMITTED) {
-            throw new BusinessException("적정성 점검이 끝난 회차에는 요청을 추가할 수 없습니다.");
+    public TargetView getTarget(Long roundItemId, LoginUser user) {
+        RoundItem item = roundMapper.findItem(roundItemId);
+        AuditRound round = item == null ? null : roundMapper.findRound(item.getRoundId());
+        if (item == null || round == null) {
+            throw new BusinessException("점검항목을 찾을 수 없습니다.");
         }
-        Map<Long, RoundItem> items = roundMapper.findItems(round.getRoundId()).stream()
-                .collect(Collectors.toMap(RoundItem::getRoundItemId, Function.identity()));
-        List<RequestCreateForm.Row> selected = form.getRows().stream().filter(RequestCreateForm.Row::isSelected).toList();
-        if (selected.isEmpty()) {
-            throw new BusinessException("요청할 항목을 하나 이상 고르세요.");
+        checkViewable(round.getRoundId(), item.getAssigneeId(), round.getStatus(), user);
+        if (!isTarget(item)) {
+            throw new BusinessException("적정성 점검 대상이 아닌 항목입니다 (제외 또는 회신불필요).");
         }
-        List<String> errors = new ArrayList<>();
-        for (RequestCreateForm.Row row : selected) {
-            RoundItem item = items.get(row.getRoundItemId());
-            if (item == null || item.isExcluded()) {
-                throw new BusinessException("이 회차의 점검 대상 항목이 아닙니다.");
-            }
-            if (mapper.findByRoundItem(item.getRoundItemId()) != null) {
-                errors.add("#" + item.getSeqNo() + " 이미 요청한 항목입니다.");
-            } else if (!StringUtils.hasText(row.getRequestMaterial())) {
-                errors.add("#" + item.getSeqNo() + " 요청자료를 입력하세요.");
-            } else if (row.getRequestMaterial().trim().length() > 1000) {
-                errors.add("#" + item.getSeqNo() + " 요청자료는 1000자 이하여야 합니다.");
-            } else if (row.getSampleSize() != null && row.getSampleSize() < 0) {
-                errors.add("#" + item.getSeqNo() + " 표본 수는 0 이상이어야 합니다.");
-            }
-        }
-        if (!errors.isEmpty()) {
-            throw new BusinessException(String.join(" / ", errors));
-        }
-        LocalDateTime now = LocalDateTime.now();
-        for (RequestCreateForm.Row row : selected) {
-            RoundItem item = items.get(row.getRoundItemId());
-            AuditRequest r = new AuditRequest();
-            r.setRoundItemId(item.getRoundItemId());
-            r.setRequestMaterial(row.getRequestMaterial().trim());
-            r.setSampleSize(row.getSampleSize());
-            r.setStatus(RequestStatus.REQUESTED);
-            r.setRequestedBy(actor.getUserId());
-            r.setRequestedAt(now);
-            r.setUpdatedBy(actor.getUserId());
-            r.setUpdatedAt(now);
-            mapper.insert(r);
-            activityLog.log(ActivityLogService.REQUEST_CREATE, "AUDIT_REQUEST", r.getRequestId(),
-                    round.getLabel() + " #" + item.getSeqNo() + " 요청: " + r.getRequestMaterial());
-        }
-        return selected.size();
+        return new TargetView(item, round, mapper.findByRoundItem(roundItemId));
     }
 
-    // ---------- 자료 제출 (담당자) ----------
+    // ---------- 보완자료 제출 (담당자) ----------
 
     @Transactional
     public void saveSubmission(Long requestId, String remark, List<MultipartFile> files, boolean submit, LoginUser actor) {
-        AuditRequest r = load(requestId);
-        checkViewable(r, actor);
+        AuditRequest r = getForView(requestId, actor);
         String blocked = submitBlockReason(r, actor);
         if (blocked != null) {
             throw new BusinessException(blocked);
@@ -181,7 +163,7 @@ public class AuditRequestService implements EvidenceAccess {
             }
         }
         if (submit && trimmed == null && r.getEvidenceCount() + newFiles.size() == 0) {
-            errors.add("제출할 자료 파일을 올리거나 비고를 입력하세요.");
+            errors.add("제출할 보완자료 파일을 올리거나 비고를 입력하세요.");
         }
         if (!errors.isEmpty()) {
             throw new BusinessException(String.join(" / ", errors));
@@ -201,30 +183,34 @@ public class AuditRequestService implements EvidenceAccess {
             evidenceService.store(EvidenceOwnerType.AUDIT_REQUEST, requestId, f, actor);
         }
         activityLog.log(submit ? ActivityLogService.REQUEST_SUBMIT : ActivityLogService.REQUEST_SAVE, "AUDIT_REQUEST",
-                requestId, r.getRoundLabel() + " #" + r.getSeqNo() + (submit ? " 자료 제출" : " 임시저장")
+                requestId, r.getRoundLabel() + " #" + r.getSeqNo() + (submit ? " 보완자료 제출" : " 보완자료 임시저장")
                         + (newFiles.isEmpty() ? "" : ", 파일 " + newFiles.size() + "건"));
     }
 
-    /** 담당자가 자료를 낼 수 없는 이유 (가능하면 null) */
+    /** 담당자가 보완자료를 낼 수 없는 이유 (가능하면 null) */
     public String submitBlockReason(AuditRequest r, LoginUser user) {
         if (user.getRole() != Role.INSPECTOR || !Objects.equals(r.getAssigneeId(), user.getUserId())) {
-            return "해당 항목의 점검 담당자만 자료를 제출할 수 있습니다.";
+            return "해당 항목의 점검 담당자만 보완자료를 제출할 수 있습니다.";
         }
         if (r.getRoundStatus() != RoundStatus.SUBMITTED) {
             return "적정성 점검이 끝난 회차입니다.";
         }
         if (r.getStatus() != RequestStatus.REQUESTED) {
-            return "이미 제출한 요청입니다. 감사부서가 보완을 요청하면 다시 제출할 수 있습니다.";
+            return "보완자료를 이미 제출했습니다. 감사부서가 다시 보완을 요청하면 제출할 수 있습니다.";
         }
         return null;
     }
 
-    // ---------- 판정 (감사부서) ----------
+    // ---------- 검토·판정 (감사부서) ----------
 
+    /**
+     * 항목 검토. 감사부서가 항목에 처음 손대면 검토 행을 만든다.
+     * 보완 요청은 요청자료를 담당자에게 보내고 제출을 기다린다. 적정·미흡 확정은 바로 판정을 끝낸다.
+     */
     @Transactional
-    public void review(Long requestId, RequestReviewForm form, LoginUser actor) {
-        AuditRequest r = load(requestId);
-        String blocked = reviewBlockReason(r);
+    public void review(Long roundItemId, RequestReviewForm form, LoginUser actor) {
+        TargetView t = getTarget(roundItemId, actor);
+        String blocked = reviewBlockReason(t.round(), t.review());
         if (blocked != null) {
             throw new BusinessException(blocked);
         }
@@ -233,25 +219,17 @@ public class AuditRequestService implements EvidenceAccess {
         }
         String comment = trimToNull(form.getDeptComment());
         String detail = trimToNull(form.getFindingDetail());
+        String material = trimToNull(form.getRequestMaterial());
         if (comment != null && comment.length() > 1000) {
             throw new BusinessException("검토 의견은 1000자 이하여야 합니다.");
         }
         if (detail != null && detail.length() > 2000) {
             throw new BusinessException("미흡 내용은 2000자 이하여야 합니다.");
         }
-
-        // 이미 개선사항에 연결된 미흡 확정은 판정을 바꿀 수 없다
-        if (r.isFindingConfirmed() && form.getDecision() != RequestReviewForm.Decision.FINDING) {
-            for (FindingLinkCheck check : findingLinkChecks.orderedStream().toList()) {
-                String reason = check.blockReason(r.getRoundItemId());
-                if (reason != null) {
-                    throw new BusinessException(reason);
-                }
-            }
+        if (material != null && material.length() > 1000) {
+            throw new BusinessException("보완 요청 자료는 1000자 이하여야 합니다.");
         }
-
-        String before = r.getStatus().getLabel() + "/" + r.getFindingLabel()
-                + (r.getConfirmedResult() == null ? "" : "(" + r.getConfirmedResult().getLabel() + ")");
+        // 값 검증은 저장 전에 모두 끝낸다 (실패하면 행도 만들지 않는다)
         switch (form.getDecision()) {
             case FINDING -> {
                 if (form.getConfirmedResult() == null || form.getConfirmedResult() == InspectionResult.NORMAL) {
@@ -260,6 +238,44 @@ public class AuditRequestService implements EvidenceAccess {
                 if (detail == null) {
                     throw new BusinessException("미흡 확정 시 미흡 내용을 입력하세요.");
                 }
+            }
+            case SUPPLEMENT -> {
+                if (material == null) {
+                    throw new BusinessException("보완 요청 시 요청할 자료를 입력하세요.");
+                }
+            }
+            default -> { }
+        }
+
+        AuditRequest r = t.review();
+        // 이미 개선사항에 연결된 미흡 확정은 판정을 바꿀 수 없다
+        if (r != null && r.isFindingConfirmed() && form.getDecision() != RequestReviewForm.Decision.FINDING) {
+            for (FindingLinkCheck check : findingLinkChecks.orderedStream().toList()) {
+                String reason = check.blockReason(roundItemId);
+                if (reason != null) {
+                    throw new BusinessException(reason);
+                }
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        String where = t.round().getLabel() + " #" + t.item().getSeqNo();
+        String before = ReviewState.of(r).getLabel()
+                + (r != null && r.getConfirmedResult() != null ? "(" + r.getConfirmedResult().getLabel() + ")" : "");
+        if (r == null) {
+            AuditRequest created = new AuditRequest();
+            created.setRoundItemId(roundItemId);
+            created.setStatus(RequestStatus.REVIEWED);
+            created.setRequestedBy(actor.getUserId());
+            created.setRequestedAt(now);
+            created.setUpdatedBy(actor.getUserId());
+            created.setUpdatedAt(now);
+            mapper.insert(created);
+            r = mapper.findById(created.getRequestId());
+        }
+
+        switch (form.getDecision()) {
+            case FINDING -> {
                 r.setStatus(RequestStatus.REVIEWED);
                 r.setFindingYn("Y");
                 r.setConfirmedResult(form.getConfirmedResult());
@@ -272,36 +288,38 @@ public class AuditRequestService implements EvidenceAccess {
                 r.setFindingDetail(null);
             }
             case SUPPLEMENT -> {
-                if (comment == null) {
-                    throw new BusinessException("보완 요청 시 요청 내용을 검토 의견에 입력하세요.");
-                }
                 r.setStatus(RequestStatus.REQUESTED);
+                r.setRequestMaterial(material);
                 r.setFindingYn(null);
                 r.setConfirmedResult(null);
                 r.setFindingDetail(null);
             }
         }
-        LocalDateTime now = LocalDateTime.now();
         r.setDeptComment(comment);
         r.setReviewedBy(actor.getUserId());
         r.setReviewedAt(now);
         r.setUpdatedBy(actor.getUserId());
         r.setUpdatedAt(now);
         mapper.updateReview(r);
-        String after = r.getStatus().getLabel() + "/" + r.getFindingLabel()
+
+        String after = ReviewState.of(r).getLabel()
                 + (r.getConfirmedResult() == null ? "" : "(" + r.getConfirmedResult().getLabel() + ")");
-        activityLog.log(ActivityLogService.REQUEST_REVIEW, "AUDIT_REQUEST", requestId,
-                r.getRoundLabel() + " #" + r.getSeqNo() + " 판정 " + before + " → " + after
-                        + (comment == null ? "" : ", 의견=" + comment));
+        if (form.getDecision() == RequestReviewForm.Decision.SUPPLEMENT) {
+            activityLog.log(ActivityLogService.REQUEST_CREATE, "AUDIT_REQUEST", r.getRequestId(),
+                    where + " 보완자료 요청: " + material + (comment == null ? "" : ", 의견=" + comment));
+        } else {
+            activityLog.log(ActivityLogService.REQUEST_REVIEW, "AUDIT_REQUEST", r.getRequestId(),
+                    where + " 판정 " + before + " → " + after + (comment == null ? "" : ", 의견=" + comment));
+        }
     }
 
     /** 감사부서가 판정할 수 없는 이유 (가능하면 null) */
-    public static String reviewBlockReason(AuditRequest r) {
-        if (r.getRoundStatus() != RoundStatus.SUBMITTED) {
+    public static String reviewBlockReason(AuditRound round, AuditRequest review) {
+        if (round.getStatus() != RoundStatus.SUBMITTED) {
             return "적정성 점검이 끝난 회차라 판정을 바꿀 수 없습니다.";
         }
-        if (r.getStatus() == RequestStatus.REQUESTED) {
-            return "담당자가 아직 자료를 제출하지 않았습니다.";
+        if (review != null && review.getStatus() == RequestStatus.REQUESTED) {
+            return "담당자가 보완자료를 제출하기를 기다리는 중입니다.";
         }
         return null;
     }
@@ -314,15 +332,15 @@ public class AuditRequestService implements EvidenceAccess {
         if (round.getStatus() != RoundStatus.SUBMITTED) {
             throw new BusinessException("이미 적정성 점검이 끝난 회차입니다.");
         }
-        List<AuditRequest> requests = mapper.findByRound(roundId);
-        long open = requests.stream().filter(r -> r.getStatus() != RequestStatus.REVIEWED).count();
+        List<Target> targets = findTargets(roundId);
+        long open = targets.stream().filter(t -> !t.state().isDone()).count();
         if (open > 0) {
-            throw new BusinessException("판정하지 않은 사전요청자료가 " + open + "건 있습니다.");
+            throw new BusinessException("검토하지 않은 항목이 " + open + "건 있습니다 (미검토·보완 요청 중 포함).");
         }
         mapper.completeRound(roundId, actor.getUserId(), LocalDateTime.now());
-        long findings = requests.stream().filter(AuditRequest::isFindingConfirmed).count();
+        long findings = targets.stream().filter(t -> t.state() == ReviewState.FINDING).count();
         activityLog.log(ActivityLogService.ROUND_DONE, "ROUND", roundId,
-                round.getLabel() + " 적정성 점검 완료, 요청 " + requests.size() + "건 중 미흡 확정 " + findings + "건");
+                round.getLabel() + " 적정성 점검 완료, 점검 항목 " + targets.size() + "건 중 미흡 확정 " + findings + "건");
     }
 
     // ---------- 권한 ----------
@@ -330,20 +348,23 @@ public class AuditRequestService implements EvidenceAccess {
     private AuditRequest load(Long requestId) {
         AuditRequest r = mapper.findById(requestId);
         if (r == null) {
-            throw new BusinessException("사전요청자료를 찾을 수 없습니다.");
+            throw new BusinessException("적정성 점검 기록을 찾을 수 없습니다.");
         }
         return r;
     }
 
-    /** 열람: 감사부서·주관자 전체, 점검 담당자는 본인 항목 */
-    private static void checkViewable(AuditRequest r, LoginUser user) {
+    /**
+     * 열람: 감사부서·주관자는 감사부서에 제출된 회차, 점검 담당자는 본인 항목.
+     * 조회자·관리자는 적정성 점검을 보지 않는다.
+     */
+    private static void checkViewable(Long roundId, Long assigneeId, RoundStatus roundStatus, LoginUser user) {
         boolean ok = switch (user.getRole()) {
-            case AUDIT_DEPT, AUDIT_LEAD, VIEWER -> true;
-            case INSPECTOR -> Objects.equals(r.getAssigneeId(), user.getUserId());
-            case ADMIN -> false;
+            case AUDIT_DEPT, AUDIT_LEAD -> roundStatus != null && roundStatus.isVisibleToAuditDept();
+            case INSPECTOR -> Objects.equals(assigneeId, user.getUserId());
+            case VIEWER, ADMIN -> false;
         };
         if (!ok) {
-            throw new AccessDeniedException("사전요청자료 열람 권한 없음");
+            throw new AccessDeniedException("적정성 점검 열람 권한 없음");
         }
     }
 
@@ -354,13 +375,12 @@ public class AuditRequestService implements EvidenceAccess {
 
     @Override
     public void checkView(Long ownerId, LoginUser user) {
-        checkViewable(load(ownerId), user);
+        getForView(ownerId, user);
     }
 
     @Override
     public void checkModify(Long ownerId, LoginUser user) {
-        AuditRequest r = load(ownerId);
-        checkViewable(r, user);
+        AuditRequest r = getForView(ownerId, user);
         String blocked = submitBlockReason(r, user);
         if (blocked != null) {
             throw new BusinessException(blocked);

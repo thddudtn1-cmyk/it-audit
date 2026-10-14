@@ -70,6 +70,7 @@
     <update id="updateReview">
         UPDATE audit_request
            SET status = #{status},
+               request_material = #{requestMaterial},
                dept_comment = #{deptComment},
                finding_yn = #{findingYn},
                confirmed_result = #{confirmedResult},

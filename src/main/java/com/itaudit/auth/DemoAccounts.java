@@ -13,9 +13,9 @@ public enum DemoAccounts {
     AUDIT_LEAD(Role.AUDIT_LEAD, "demo-lead", "데모 주관자",
             "체크리스트 개정, 분기 회차 생성·배정, 총괄표 검토·제출, 관리대장 종결"),
     INSPECTOR(Role.INSPECTOR, "demo-inspector", "데모 담당자",
-            "배정 항목 점검결과 입력·증적 첨부, 사전요청자료 제출, 조치 현황 입력"),
+            "배정 항목 점검결과 입력·증적 첨부, 적정성 점검 보완자료 제출, 조치 현황 입력"),
     AUDIT_DEPT(Role.AUDIT_DEPT, "demo-dept", "데모 감사부서",
-            "총괄표 열람, 사전요청자료 요청, 미흡 확정·권고사항 등록"),
+            "제출된 점검 내역 적정성 검토, 보완자료 요청, 미흡 확정·권고사항 등록"),
     VIEWER(Role.VIEWER, "demo-viewer", "데모 조회자",
             "회차 진행 현황과 개선사항 조회");
 

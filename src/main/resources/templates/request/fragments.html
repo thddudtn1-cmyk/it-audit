@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- 사전요청자료 상태 표시 -->
-<th:block th:fragment="status(r)">
-    <span class="tag" th:classappend="|req--${r.status.name().toLowerCase()}|" th:text="${r.status.label}">요청</span>
-    <span th:if="${r.findingConfirmed}" class="result result--risk" th:text="|미흡 확정 (${r.confirmedResult.label})|">미흡 확정</span>
-    <span th:if="${r.noFinding}" class="result result--normal">이상 없음</span>
+<!-- 적정성 점검 상태 표시: state = ReviewState, review = AuditRequest (없으면 null) -->
+<th:block th:fragment="state(state, review)">
+    <span class="tag" th:classappend="|rs--${#strings.toLowerCase(state.name())}|" th:text="${state.label}">미검토</span>
+    <span th:if="${state.name() == 'FINDING' and review != null and review.confirmedResult != null}" class="result"
+          th:classappend="|result--${#strings.toLowerCase(review.confirmedResult.name())}|" th:text="${review.confirmedResult.label}">미흡</span>
 </th:block>
 </body>
 </html>

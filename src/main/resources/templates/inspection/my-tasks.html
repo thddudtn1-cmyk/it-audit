@@ -66,10 +66,10 @@
         </div>
     </section>
     <section class="section">
-        <h3 th:text="|받은 사전요청자료 ${#lists.size(requests)}건|">받은 사전요청자료</h3>
+        <h3 th:text="|적정성 점검 보완 요청 ${#lists.size(requests)}건|">적정성 점검 보완 요청</h3>
         <div class="table-wrap">
             <table class="table">
-                <thead><tr><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>사전요청자료</th><th>요청일</th><th class="col-act"></th></tr></thead>
+                <thead><tr><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>보완 요청자료</th><th>요청일</th><th class="col-act"></th></tr></thead>
                 <tbody>
                 <tr th:each="r : ${requests}">
                     <td th:text="${r.roundLabel}">2026년 3분기</td>
@@ -78,12 +78,12 @@
                     <td class="pre small">
                         <span th:text="${r.requestMaterial}">자료</span>
                         <span class="tag" th:if="${r.sampleSize != null}" th:text="|표본 ${r.sampleSize}개|"></span>
-                        <div class="small error" th:if="${r.deptComment != null}" th:text="|보완 요청: ${r.deptComment}|"></div>
+                        <div class="small error" th:if="${r.deptComment != null}" th:text="|감사부서 의견: ${r.deptComment}|"></div>
                     </td>
                     <td th:text="${#temporals.format(r.requestedAt, 'yyyy-MM-dd')}">-</td>
-                    <td><a class="button" th:href="@{/requests/{id}(id=${r.requestId})}">제출</a></td>
+                    <td><a class="button" th:href="@{/requests/items/{id}(id=${r.roundItemId})}">제출</a></td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(requests)}"><td colspan="6" class="empty">제출할 사전요청자료가 없습니다.</td></tr>
+                <tr th:if="${#lists.isEmpty(requests)}"><td colspan="6" class="empty">제출할 보완자료 요청이 없습니다.</td></tr>
                 </tbody>
             </table>
         </div>

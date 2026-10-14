@@ -35,10 +35,10 @@ public final class ActionLabels {
         put(ActivityLogService.ROUND_ITEM_CONFIRM_CANCEL, "점검 확인 취소");
         put(ActivityLogService.ROUND_ITEM_REJECT, "점검 반려");
         put(ActivityLogService.ROUND_SUBMIT, "감사부서 제출");
-        put(ActivityLogService.REQUEST_CREATE, "사전요청자료 요청");
-        put(ActivityLogService.REQUEST_SAVE, "사전요청자료 임시저장");
-        put(ActivityLogService.REQUEST_SUBMIT, "사전요청자료 제출");
-        put(ActivityLogService.REQUEST_REVIEW, "미흡 확정·판정");
+        put(ActivityLogService.REQUEST_CREATE, "보완자료 요청");
+        put(ActivityLogService.REQUEST_SAVE, "보완자료 임시저장");
+        put(ActivityLogService.REQUEST_SUBMIT, "보완자료 제출");
+        put(ActivityLogService.REQUEST_REVIEW, "적정성 판정");
         put(ActivityLogService.ROUND_DONE, "적정성 점검 완료");
         put(ActivityLogService.IMPROVEMENT_CREATE, "개선·권고 등록");
         put(ActivityLogService.IMPROVEMENT_UPDATE, "개선·권고 수정");

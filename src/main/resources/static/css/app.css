@@ -350,7 +350,7 @@ form.inline { display: inline; }
 .reject-box textarea { width: 180px; margin: 4px 0; padding: 4px 6px; border: 1px solid var(--c-border); border-radius: var(--radius-sm); font: inherit; }
 .error { color: var(--c-error); }
 
-/* 사전요청자료 (F-06) */
+/* 적정성 점검 (F-06) */
 .req--requested { background: var(--c-warn-bg); }
 .req--submitted { background: var(--c-info-bg); color: var(--c-primary); }
 .req--reviewed { background: #e7f6ec; color: #1e6b3a; }
@@ -442,3 +442,9 @@ form.inline { display: inline; }
 .col-check { width: 36px; text-align: center; }
 .button--danger { border-color: var(--c-error); color: var(--c-error); background: var(--c-surface); }
 .button--danger:not(:disabled):hover { background: var(--c-error); color: #fff; }
+.rs--not_reviewed { background: #eef1f5; color: var(--c-muted); }
+.rs--requested { background: var(--c-warn-bg); color: #8a5a00; }
+.rs--submitted { background: var(--c-info-bg); color: var(--c-primary); }
+.rs--passed { background: #e7f6ec; color: #1e6b3a; }
+.rs--finding { background: var(--c-error-bg); color: var(--c-error); }
+.table--checklist td.cell-wide { min-width: 220px; }

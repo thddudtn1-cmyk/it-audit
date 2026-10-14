@@ -45,7 +45,7 @@ public class TestRounds {
         return itemId;
     }
 
-    /** 사전요청자료 요청 → 제출 → 미흡 확정까지 끝난 상태로 만든다 */
+    /** 적정성 점검에서 미흡 확정까지 끝난 상태로 만든다 (보완자료 요청 이력이 있는 것처럼 요청자료·비고 포함) */
     public Long confirmFinding(Long roundItemId, Long deptUserId, String result, String findingDetail, String remark) {
         jdbc.update("INSERT INTO audit_request (round_item_id, request_material, status, remark, finding_yn, confirmed_result, "
                         + "finding_detail, requested_by, requested_at, reviewed_by, reviewed_at, updated_at) "

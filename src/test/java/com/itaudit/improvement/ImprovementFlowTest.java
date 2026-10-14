@@ -138,7 +138,7 @@ class ImprovementFlowTest {
     @Test
     void 개선사항에_연결된_미흡_확정은_감사부서가_판정을_바꿀_수_없다() throws Exception {
         createImprovement();
-        mvc.perform(post("/requests/" + request23 + "/review").with(user(dept)).with(csrf()).param("decision", "NO_FINDING"))
+        mvc.perform(post("/requests/items/" + item23 + "/review").with(user(dept)).with(csrf()).param("decision", "NO_FINDING"))
                 .andExpect(content().string(Matchers.containsString("개선사항(번호")));
     }
 

@@ -8,12 +8,12 @@ import com.itaudit.checklist.AuditPeriod;
 import com.itaudit.inspection.InspectionResult;
 import com.itaudit.round.RoundStatus;
 
-/** 사전요청자료 (audit_request). 조회 시 회차 점검항목·체크리스트·회차 정보를 조인해 채운다. */
+/** 적정성 점검 기록·보완자료 요청 (audit_request). 조회 시 회차 점검항목·체크리스트·회차 정보를 조인해 채운다. */
 public class AuditRequest {
 
     private Long requestId;
     private Long roundItemId;
-    /** 감사부서 요청자료 (④ '사전요청자료') */
+    /** 감사부서가 요청한 보완자료 (보완 요청 없이 바로 판정한 행은 null) */
     private String requestMaterial;
     private Integer sampleSize;
     /** 비고 (④, 담당자 입력) */

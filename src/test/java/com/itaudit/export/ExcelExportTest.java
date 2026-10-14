@@ -134,14 +134,19 @@ class ExcelExportTest {
     }
 
     @Test
-    void 사전요청자료는_제목과_헤더를_원본처럼_쓴다() throws Exception {
+    void 적정성_점검은_검토_결과를_점검_항목별로_내보낸다() throws Exception {
         testRounds.submitToDept(roundId);
-        testRounds.confirmFinding(item23, dept.getUserId(), "INSUFFICIENT", "미삭제", "26년 4분기 내 조치");
-        try (XSSFWorkbook wb = download("/requests/export?roundId=" + roundId, dept, "4_2026_3분기_적정성점검_사전요청자료.xlsx")) {
+        testRounds.confirmFinding(item23, dept.getUserId(), "INSUFFICIENT", "퇴사자 계정 미삭제", "26년 4분기 내 조치");
+        try (XSSFWorkbook wb = download("/requests/export?roundId=" + roundId, dept, "4_2026_3분기_적정성점검.xlsx")) {
             Sheet s = wb.getSheetAt(0);
-            assertThat(rowValues(s, 0, 1, 1)).containsExactly("■ 2026년 3분기 IT자체감사 적정성 점검 사전요청자료");
-            assertThat(rowValues(s, 2, 1, 6)).containsExactly("No", "감사 영역", "평가항목", "점검방식", "사전요청자료", "비고");
-            assertThat(rowValues(s, 3, 6, 6)).containsExactly("26년 4분기 내 조치");
+            assertThat(rowValues(s, 0, 1, 1)).containsExactly("■ 2026년 3분기 IT자체감사 적정성 점검");
+            assertThat(rowValues(s, 2, 1, 9)).containsExactly("No", "감사 영역", "평가항목", "점검방식", "점검결과",
+                    "보완 요청자료", "비고", "적정성 판정", "미흡 내용·검토 의견");
+            // 점검 대상 = 제외·회신불필요가 아닌 항목: 확인된 #23, #26 만
+            assertThat(s.getLastRowNum()).isEqualTo(2 + 2);
+            assertThat(rowValues(s, 3, 3, 3)).containsExactly("개인(신용)정보 관리 보호");
+            assertThat(rowValues(s, 3, 5, 9)).containsExactly("미흡", "요청자료", "26년 4분기 내 조치", "미흡 확정 (미흡)", "퇴사자 계정 미삭제");
+            assertThat(rowValues(s, 4, 5, 9)).containsExactly("정상", "", "", "미검토", "");
         }
         mvc.perform(get("/requests/export?roundId=" + roundId).with(user(kim))).andExpect(status().isForbidden());
     }

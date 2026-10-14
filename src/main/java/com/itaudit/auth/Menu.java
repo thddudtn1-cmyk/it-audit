@@ -22,7 +22,7 @@ public enum Menu {
             Role.AUDIT_LEAD, Role.AUDIT_DEPT, Role.VIEWER),
     // [가정] 오픈 이슈 '감사부서 직접 로그인 여부'는 감사부서가 직접 로그인해 작성하는 쪽으로 가정한다.
     //        주관자도 진행 상황 확인을 위해 열람할 수 있게 둔다.
-    REQUESTS("사전요청자료", "/requests", "F-06",
+    REQUESTS("적정성 점검", "/requests", "F-06",
             Role.AUDIT_LEAD, Role.AUDIT_DEPT, Role.INSPECTOR),
     IMPROVEMENTS("개선사항 관리대장", "/improvements", "F-07",
             Role.AUDIT_LEAD, Role.INSPECTOR, Role.AUDIT_DEPT, Role.VIEWER),

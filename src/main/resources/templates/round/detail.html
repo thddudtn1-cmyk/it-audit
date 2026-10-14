@@ -35,7 +35,7 @@
         <span class="toolbar__actions">
             <a class="button" th:href="@{/rounds/{id}/export(id=${round.roundId})}">총괄표 엑셀 내보내기</a>
             <a class="button" sec:authorize="hasAnyRole('AUDIT_DEPT','AUDIT_LEAD')" th:if="${round.status.visibleToAuditDept}"
-               th:href="@{/requests(roundId=${round.roundId})}">사전요청자료 보기</a>
+               th:href="@{/requests(roundId=${round.roundId})}">적정성 점검 보기</a>
         </span>
     </div>
     <div class="alert alert--info" th:if="${round.submittedAt != null}"

@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('받은 사전요청자료')}"></head>
+<head th:replace="~{fragments/layout :: head('적정성 점검 보완 요청')}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
 <main class="container container--wide">
-    <h2>받은 사전요청자료</h2>
+    <h2>적정성 점검 보완 요청</h2>
+    <p class="small muted">감사부서가 제출하신 분기 점검 내역을 검토하며 요청한 보완자료입니다.</p>
     <div th:replace="~{fragments/layout :: flash}"></div>
     <div class="table-wrap">
         <table class="table">
             <thead>
-            <tr><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>사전요청자료</th>
+            <tr><th>회차</th><th class="col-no">순번</th><th class="col-item">평가항목</th><th>보완 요청자료</th>
                 <th>요청일</th><th>상태</th><th class="col-act"></th></tr>
             </thead>
             <tbody>
@@ -21,14 +22,15 @@
                     <span th:text="${r.requestMaterial}">자료</span>
                     <span class="tag" th:if="${r.sampleSize != null}" th:text="|표본 ${r.sampleSize}개|"></span>
                     <div class="small error" th:if="${r.status.name() == 'REQUESTED' and r.deptComment != null}"
-                         th:text="|보완 요청: ${r.deptComment}|"></div>
+                         th:text="|감사부서 의견: ${r.deptComment}|"></div>
                 </td>
                 <td th:text="${#temporals.format(r.requestedAt, 'yyyy-MM-dd')}">-</td>
-                <td><span th:replace="~{request/fragments :: status(${r})}"></span></td>
-                <td><a class="button" th:href="@{/requests/{id}(id=${r.requestId})}"
+                <td><span class="tag" th:classappend="${r.status.name() == 'REQUESTED'} ? 'rs--requested' : (${r.status.name() == 'SUBMITTED'} ? 'rs--submitted' : 'rs--passed')"
+                          th:text="${r.status.label}">보완 요청</span></td>
+                <td><a class="button" th:href="@{/requests/items/{id}(id=${r.roundItemId})}"
                        th:text="${r.status.name() == 'REQUESTED'} ? '제출' : '보기'">보기</a></td>
             </tr>
-            <tr th:if="${#lists.isEmpty(requests)}"><td colspan="7" class="empty">받은 요청이 없습니다.</td></tr>
+            <tr th:if="${#lists.isEmpty(requests)}"><td colspan="7" class="empty">받은 보완 요청이 없습니다.</td></tr>
             </tbody>
         </table>
     </div>

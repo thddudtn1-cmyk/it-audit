@@ -82,7 +82,7 @@ class RoundDeleteTest {
     }
 
     @Test
-    void 회차와_그_안의_입력_증적_사전요청자료_코멘트를_모두_지운다() throws Exception {
+    void 회차와_그_안의_입력_증적_적정성점검기록_코멘트를_모두_지운다() throws Exception {
         Long roundId = testRounds.create(2026, 3, lead);
         Long other = testRounds.create(2026, 2, lead);
         Long item23 = testRounds.confirmItem(roundId, 23, kim, "INFRA", "INSUFFICIENT", "미회수", "보완", "2026-12-31");
@@ -115,7 +115,7 @@ class RoundDeleteTest {
         assertThat(count("SELECT COUNT(*) FROM comment_note")).isZero();
         assertThat(activityLogMapper.findByAction(ActivityLogService.ROUND_DELETE)).hasSize(1)
                 .allMatch(l -> l.getDetail().contains("2026년 3분기 삭제 (상태 감사부서 제출)")
-                        && l.getDetail().contains("점검 입력 1건") && l.getDetail().contains("사전요청자료 1건")
+                        && l.getDetail().contains("점검 입력 1건") && l.getDetail().contains("적정성 점검 기록 1건")
                         && l.getDetail().contains("증적 파일 2개") && l.getDetail().contains("코멘트 1건"));
         // 삭제 후 같은 분기 회차를 다시 만들 수 있다
         assertThat(testRounds.create(2026, 3, lead)).isNotNull();

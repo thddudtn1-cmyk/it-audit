@@ -16,7 +16,7 @@ import com.itaudit.evidence.EvidenceService;
 
 /**
  * 분기 회차 삭제 (주관자). 상태와 관계없이 삭제할 수 있다.
- * 회차와 그 안의 점검 입력·증적(파일 포함)·사전요청자료·코멘트를 완전히 지우고 되돌릴 수 없다.
+ * 회차와 그 안의 점검 입력·증적(파일 포함)·적정성 점검 기록·코멘트를 완전히 지우고 되돌릴 수 없다.
  * [결정] CLAUDE.md 의 '판정·파일 삭제는 논리 삭제' 규칙의 예외로 사용자가 물리 삭제를 선택했다.
  *        대신 지운 내용의 요약을 활동 이력(감사 로그)에 남긴다.
  * 개선사항·권고사항이 연결된 회차는 관리대장이 깨지므로 삭제할 수 없다.
@@ -71,7 +71,7 @@ public class RoundDeleteService {
             allPaths.addAll(paths);
             activityLog.log(ActivityLogService.ROUND_DELETE, "ROUND", id,
                     r.getLabel() + " 삭제 (상태 " + r.getStatus().getLabel() + "): 점검항목 " + items + "건, 점검 입력 "
-                            + inspected + "건, 사전요청자료 " + requests + "건, 증적 파일 " + paths.size() + "개, 코멘트 "
+                            + inspected + "건, 적정성 점검 기록 " + requests + "건, 증적 파일 " + paths.size() + "개, 코멘트 "
                             + comments + "건 함께 삭제");
         }
         // 파일은 DB 삭제가 확정(커밋)된 뒤에 지운다. 롤백되면 파일은 그대로 둔다.
