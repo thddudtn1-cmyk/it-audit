@@ -103,6 +103,8 @@ public class RoundController {
         model.addAttribute("items", items.stream().filter(i -> !i.isExcluded()).toList());
         model.addAttribute("excludedItems", items.stream().filter(RoundItem::isExcluded).toList());
         model.addAttribute("notReadyReason", round.isReadyToSubmit() ? null : ReviewService.notReadyReason(round));
+        // 감사부서에 제출하면 점검결과가 정상이 아닌 항목이 개선사항 관리대장에 자동 등록된다
+        model.addAttribute("autoImprovementCount", items.stream().filter(ReviewService::isImprovementTarget).count());
         return "round/detail";
     }
 

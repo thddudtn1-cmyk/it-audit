@@ -6,7 +6,7 @@
 <main class="container container--wide">
     <h2>개선사항 등록 — 미흡 확정 건 선택</h2>
     <div th:replace="~{fragments/layout :: flash}"></div>
-    <p class="small muted">감사부서가 미흡으로 확정했지만 아직 관리대장에 없는 건입니다. 한 개선사항으로 묶을 항목을 고르세요 (같은 회차만).</p>
+    <p class="small muted">감사부서가 미흡으로 확정했지만 아직 관리대장에 없는 건입니다. 담당자가 정상이 아닌 점검결과로 제출한 항목은 분기 점검 제출 시 이미 자동 등록되므로 여기에 나오지 않습니다 (예: 정상으로 제출했지만 감사부서가 미흡으로 확정한 건). 한 개선사항으로 묶을 항목을 고르세요 (같은 회차만).</p>
     <form method="get" th:action="@{/improvements/new}">
         <div class="table-wrap">
             <table class="table table--checklist">

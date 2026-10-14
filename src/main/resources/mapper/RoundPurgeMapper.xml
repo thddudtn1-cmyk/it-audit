@@ -16,10 +16,23 @@
         OR (owner_type = 'AUDIT_REQUEST' AND owner_id IN (<include refid="requestIds"/>))
     </sql>
 
-    <select id="countImprovementLinks" resultType="int">
-        SELECT (SELECT COUNT(*) FROM improvement WHERE round_id = #{roundId})
-             + (SELECT COUNT(*) FROM improvement_item WHERE round_item_id IN (<include refid="itemIds"/>))
+    <select id="countBlockingImprovements" resultType="int">
+        SELECT (SELECT COUNT(*) FROM improvement m WHERE m.round_id = #{roundId}
+                   AND NOT (m.origin = 'ROUND_SUBMIT' AND m.action_result = 'PLANNED' AND m.closed_yn = 'N' AND m.action_status IS NULL
+                   AND NOT EXISTS (SELECT 1 FROM evidence e WHERE e.owner_type = 'IMPROVEMENT' AND e.owner_id = m.improvement_id)
+                   AND NOT EXISTS (SELECT 1 FROM comment_note c WHERE c.target_type = 'IMPROVEMENT' AND c.target_id = m.improvement_id)))
+             + (SELECT COUNT(*) FROM improvement_item x
+                 WHERE x.round_item_id IN (<include refid="itemIds"/>)
+                   AND x.improvement_id NOT IN (SELECT improvement_id FROM improvement WHERE round_id = #{roundId}))
     </select>
+
+    <delete id="deleteImprovementLinks">
+        DELETE FROM improvement_item WHERE improvement_id IN (SELECT improvement_id FROM improvement WHERE round_id = #{roundId})
+    </delete>
+
+    <delete id="deleteImprovements">
+        DELETE FROM improvement WHERE round_id = #{roundId}
+    </delete>
 
     <select id="findEvidencePaths" resultType="string">
         SELECT stored_path FROM evidence WHERE <include refid="evidenceOwned"/>

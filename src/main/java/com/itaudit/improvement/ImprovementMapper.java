@@ -22,6 +22,9 @@ public interface ImprovementMapper {
     /** 이 점검항목이 연결된 개선사항 ID (kind 가 null 이면 전체) */
     List<Long> findIdsByRoundItem(@Param("roundItemId") Long roundItemId, @Param("kind") ImprovementKind kind);
 
+    /** 이 점검항목이 연결된, 해당 경위로 등록된 개선사항 ID */
+    List<Long> findIdsByRoundItemAndOrigin(@Param("roundItemId") Long roundItemId, @Param("origin") ImprovementOrigin origin);
+
     void insert(Improvement improvement);
 
     void insertItem(@Param("improvementId") Long improvementId, @Param("roundItemId") Long roundItemId);

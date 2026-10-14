@@ -16,6 +16,8 @@ public class Improvement {
 
     private Long improvementId;
     private ImprovementKind kind;
+    /** 관리대장에 오른 경위 */
+    private ImprovementOrigin origin;
     /** 발생 회차 */
     private Long roundId;
     private String teamCode;
@@ -92,6 +94,10 @@ public class Improvement {
 
     public Long getImprovementId() { return improvementId; }
     public void setImprovementId(Long improvementId) { this.improvementId = improvementId; }
+    public ImprovementOrigin getOrigin() { return origin; }
+    public void setOrigin(ImprovementOrigin origin) { this.origin = origin; }
+    /** 분기 점검 제출 시 자동 등록된 건: 점검 결과·내용은 제출 시점 값으로 확정되어 고칠 수 없다 */
+    public boolean isAutoRegistered() { return origin == ImprovementOrigin.ROUND_SUBMIT; }
     public ImprovementKind getKind() { return kind; }
     public void setKind(ImprovementKind kind) { this.kind = kind; }
     public Long getRoundId() { return roundId; }

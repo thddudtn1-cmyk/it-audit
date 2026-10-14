@@ -9,6 +9,7 @@
         <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">예정</span>
         <span class="tag" th:if="${m.closed}">종결</span>
         <span th:replace="~{fragments/common :: due(${m})}"></span>
+        <span class="tag" th:text="${m.origin.label}">등록 경위</span>
     </div>
     <div th:replace="~{fragments/layout :: flash}"></div>
 
@@ -31,15 +32,17 @@
     <form th:object="${form}" th:action="@{/improvements/{id}(id=${m.improvementId})}" method="post"
           enctype="multipart/form-data" class="form panel">
         <h3>관리 정보</h3>
+        <p class="small muted" th:if="${m.autoRegistered}">분기 점검을 감사부서에 제출할 때 점검결과가 정상이 아니어서 자동 등록된 건입니다.
+            점검 결과와 점검 내용은 제출 시점 값으로 확정되어 고칠 수 없습니다 (감사부서 검토 결과와 무관).</p>
         <fieldset th:disabled="${!perm.manage}">
             <th:block th:replace="~{improvement/fields :: owner}"></th:block>
             <label th:unless="${rec}">점검 결과
-                <select th:field="*{inspectionResult}">
+                <select th:field="*{inspectionResult}" th:disabled="${m.autoRegistered}">
                     <option th:each="r : ${findingResults}" th:value="${r}" th:text="${r.label}">미흡</option>
                 </select>
             </label>
             <label><span th:text="${rec} ? '상세 내용' : '점검 내용 상세'">내용</span>
-                <textarea th:field="*{detail}" rows="4" maxlength="4000"></textarea>
+                <textarea th:field="*{detail}" rows="4" maxlength="4000" th:disabled="${m.autoRegistered}"></textarea>
             </label>
         </fieldset>
 

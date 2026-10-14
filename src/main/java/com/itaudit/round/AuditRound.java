@@ -24,7 +24,10 @@ public class AuditRound {
     private int assignedCount;
     private int submittedCount;
     private int confirmedCount;
-    /** 이 회차에서 발생한 개선사항·권고사항 수 (0보다 크면 삭제할 수 없다) */
+    /**
+     * 회차 삭제를 막는 개선사항·권고사항 수: 직접 등록했거나(미흡 확정 등록·권고사항), 조치가 진행·종결됐거나,
+     * 증빙·코멘트가 있는 건. 0보다 크면 삭제할 수 없다. (아무도 손대지 않은 자동 등록 건은 회차와 함께 지운다)
+     */
     private int improvementCount;
 
     public String getLabel() {

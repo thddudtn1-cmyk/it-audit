@@ -3,7 +3,7 @@
 <mapper namespace="com.itaudit.improvement.ImprovementMapper">
 
     <sql id="select">
-        SELECT m.improvement_id, m.kind, m.round_id, m.team_code, m.assignee_id, m.inspection_result, m.detail,
+        SELECT m.improvement_id, m.kind, m.origin, m.round_id, m.team_code, m.assignee_id, m.inspection_result, m.detail,
                m.improvement_plan, m.planned_date, m.action_result, m.action_status, m.closed_yn, m.closed_by,
                m.closed_at, m.close_comment, m.created_by, m.created_at, m.updated_by, m.updated_at,
                r.round_year, r.quarter, t.team_name, u.user_name AS assignee_name,
@@ -64,11 +64,19 @@
          ORDER BY x.improvement_id
     </select>
 
+    <select id="findIdsByRoundItemAndOrigin" resultType="long">
+        SELECT x.improvement_id
+          FROM improvement_item x
+          JOIN improvement m ON m.improvement_id = x.improvement_id
+         WHERE x.round_item_id = #{roundItemId} AND m.origin = #{origin}
+         ORDER BY x.improvement_id
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="improvementId" keyColumn="improvement_id">
-        INSERT INTO improvement (kind, round_id, team_code, assignee_id, inspection_result, detail, improvement_plan,
+        INSERT INTO improvement (kind, origin, round_id, team_code, assignee_id, inspection_result, detail, improvement_plan,
                                  planned_date, action_result, action_status, closed_yn, created_by, created_at,
                                  updated_by, updated_at)
-        VALUES (#{kind}, #{roundId}, #{teamCode}, #{assigneeId}, #{inspectionResult}, #{detail}, #{improvementPlan},
+        VALUES (#{kind}, #{origin}, #{roundId}, #{teamCode}, #{assigneeId}, #{inspectionResult}, #{detail}, #{improvementPlan},
                 #{plannedDate}, #{actionResult}, #{actionStatus}, 'N', #{createdBy}, #{createdAt},
                 #{updatedBy}, #{updatedAt})
     </insert>

@@ -9,6 +9,11 @@ import org.springframework.util.StringUtils;
 import com.itaudit.auth.LoginUser;
 import com.itaudit.common.ActivityLogService;
 import com.itaudit.common.BusinessException;
+import com.itaudit.improvement.ActionResult;
+import com.itaudit.improvement.Improvement;
+import com.itaudit.improvement.ImprovementKind;
+import com.itaudit.improvement.ImprovementMapper;
+import com.itaudit.improvement.ImprovementOrigin;
 
 /**
  * 총괄표 검토·감사부서 제출 (F-05).
@@ -20,10 +25,12 @@ public class ReviewService {
 
     private final RoundMapper mapper;
     private final ActivityLogService activityLog;
+    private final ImprovementMapper improvementMapper;
 
-    public ReviewService(RoundMapper mapper, ActivityLogService activityLog) {
+    public ReviewService(RoundMapper mapper, ActivityLogService activityLog, ImprovementMapper improvementMapper) {
         this.mapper = mapper;
         this.activityLog = activityLog;
+        this.improvementMapper = improvementMapper;
     }
 
     /** 항목 제출·검토·배정 변경 뒤 호출: 작성중 ↔ 검토중 자동 전환 */
@@ -114,8 +121,54 @@ public class ReviewService {
             throw new BusinessException(notReadyReason(round));
         }
         mapper.submitRound(roundId, actor.getUserId(), LocalDateTime.now());
+        int registered = registerImprovements(round, actor);
         activityLog.log(ActivityLogService.ROUND_SUBMIT, "ROUND", roundId,
-                round.getLabel() + " 감사부서 제출, 점검 대상 " + round.getTargetCount() + "건");
+                round.getLabel() + " 감사부서 제출, 점검 대상 " + round.getTargetCount() + "건"
+                        + ", 개선사항 관리대장 자동 등록 " + registered + "건");
+    }
+
+    /** 점검결과가 정상이 아닌 항목 = 개선사항 관리대장에 자동 등록될 항목 (제외·회신불필요 항목은 대상 아님) */
+    public static boolean isImprovementTarget(RoundItem item) {
+        return !item.isExcluded() && !item.isNoReply() && item.getInspectionResult() != null
+                && item.getInspectionResult().requiresAction();
+    }
+
+    /**
+     * 분기 점검을 감사부서에 제출하는 시점에 점검결과가 정상이 아닌 항목(개선필요·미흡·위험)을 개선사항 관리대장에 확정 등록한다.
+     * 감사부서의 적정성 점검(검토·판정) 결과와 관계없이 제출 시점의 점검결과를 그대로 쓰며, 항목 1건당 개선사항 1건을 만든다.
+     * 개선 방안·개선예정일은 담당자가 입력한 조치내용·개선 예정일을 기본값으로 쓴다.
+     */
+    private int registerImprovements(AuditRound round, LoginUser actor) {
+        LocalDateTime now = LocalDateTime.now();
+        int count = 0;
+        for (RoundItem item : mapper.findItems(round.getRoundId())) {
+            if (!isImprovementTarget(item)
+                    || !improvementMapper.findIdsByRoundItem(item.getRoundItemId(), ImprovementKind.IMPROVEMENT).isEmpty()) {
+                continue;
+            }
+            Improvement m = new Improvement();
+            m.setKind(ImprovementKind.IMPROVEMENT);
+            m.setOrigin(ImprovementOrigin.ROUND_SUBMIT);
+            m.setRoundId(round.getRoundId());
+            m.setTeamCode(item.getTeamCode());
+            m.setAssigneeId(item.getAssigneeId());
+            m.setInspectionResult(item.getInspectionResult());
+            m.setDetail(StringUtils.hasText(item.getInspectionDetail()) ? item.getInspectionDetail() : "(점검 내용 없음)");
+            m.setImprovementPlan(item.getActionPlan());
+            m.setPlannedDate(item.getPlannedDate());
+            m.setActionResult(ActionResult.PLANNED);
+            m.setCreatedBy(actor.getUserId());
+            m.setCreatedAt(now);
+            m.setUpdatedBy(actor.getUserId());
+            m.setUpdatedAt(now);
+            improvementMapper.insert(m);
+            improvementMapper.insertItem(m.getImprovementId(), item.getRoundItemId());
+            activityLog.log(ActivityLogService.IMPROVEMENT_CREATE, "IMPROVEMENT", m.getImprovementId(),
+                    "분기 점검 제출로 자동 등록: " + round.getLabel() + " #" + item.getSeqNo() + ", 점검 결과="
+                            + item.getInspectionResult().getLabel());
+            count++;
+        }
+        return count;
     }
 
     /** 제출할 수 없는 이유 (화면 안내용) */

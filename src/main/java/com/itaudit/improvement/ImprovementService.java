@@ -233,6 +233,8 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         LocalDateTime now = LocalDateTime.now();
         Improvement m = new Improvement();
         m.setKind(form.getKind());
+        m.setOrigin(form.getKind() == ImprovementKind.RECOMMENDATION ? ImprovementOrigin.RECOMMENDATION
+                : ImprovementOrigin.AUDIT_FINDING);
         m.setRoundId(form.getRoundId());
         m.setTeamCode(teamOf(form, assignee));
         m.setAssigneeId(assignee == null ? null : assignee.getUserId());
@@ -299,8 +301,11 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
             AppUser assignee = checkAssignee(form);
             m.setTeamCode(teamOf(form, assignee));
             m.setAssigneeId(assignee == null ? null : assignee.getUserId());
-            m.setDetail(required(form.getDetail(), m.getKind() == ImprovementKind.IMPROVEMENT ? "점검 내용 상세" : "상세 내용", 4000));
-            if (m.getKind() == ImprovementKind.IMPROVEMENT) {
+            // 분기 점검 제출 시 자동 등록된 건의 점검 결과·점검 내용은 제출 시점 값으로 확정되어 고치지 않는다
+            if (!m.isAutoRegistered()) {
+                m.setDetail(required(form.getDetail(), m.getKind() == ImprovementKind.IMPROVEMENT ? "점검 내용 상세" : "상세 내용", 4000));
+            }
+            if (m.getKind() == ImprovementKind.IMPROVEMENT && !m.isAutoRegistered()) {
                 if (form.getInspectionResult() == null || form.getInspectionResult() == InspectionResult.NORMAL) {
                     throw new BusinessException("점검 결과(개선필요·미흡·위험)를 고르세요.");
                 }
@@ -364,10 +369,13 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
 
     // ---------- 다른 기능과의 연결 ----------
 
-    /** 개선사항에 연결된 미흡 확정은 판정을 바꿀 수 없다 (F-06) */
+    /**
+     * 감사부서 미흡 확정에서 등록한 개선사항이 있으면 그 확정은 판정을 바꿀 수 없다 (F-06).
+     * 분기 점검 제출 시 자동 등록된 개선사항은 감사부서 판정과 무관하므로 판정 변경을 막지 않는다.
+     */
     @Override
     public String blockReason(Long roundItemId) {
-        List<Long> ids = mapper.findIdsByRoundItem(roundItemId, ImprovementKind.IMPROVEMENT);
+        List<Long> ids = mapper.findIdsByRoundItemAndOrigin(roundItemId, ImprovementOrigin.AUDIT_FINDING);
         return ids.isEmpty() ? null : "개선사항(번호 " + ids.get(0) + ")에 등록된 미흡 확정이라 판정을 바꿀 수 없습니다.";
     }
 

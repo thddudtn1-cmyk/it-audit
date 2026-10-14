@@ -28,6 +28,8 @@
             </form>
         </span>
     </div>
+    <div class="alert alert--warn" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable and autoImprovementCount > 0}"
+         th:text="|감사부서에 제출하면 점검결과가 정상이 아닌 ${autoImprovementCount}건이 감사부서 검토와 관계없이 개선사항 관리대장에 자동 등록됩니다.|">자동 등록 안내</div>
     <div class="alert alert--info" sec:authorize="hasRole('AUDIT_LEAD')" th:if="${round.status.editable and notReadyReason != null}"
          th:text="|감사부서 제출 전 확인: ${notReadyReason}|">안내</div>
     <div class="toolbar">

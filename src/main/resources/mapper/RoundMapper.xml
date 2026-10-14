@@ -5,7 +5,10 @@
     <sql id="roundWithCounts">
         SELECT r.round_id, r.round_year, r.quarter, r.status, r.created_by, r.created_at, r.updated_by, r.updated_at,
                r.submitted_by, r.submitted_at,
-               (SELECT COUNT(*) FROM improvement m WHERE m.round_id = r.round_id) AS improvement_count,
+               (SELECT COUNT(*) FROM improvement m WHERE m.round_id = r.round_id
+                   AND NOT (m.origin = 'ROUND_SUBMIT' AND m.action_result = 'PLANNED' AND m.closed_yn = 'N' AND m.action_status IS NULL
+                   AND NOT EXISTS (SELECT 1 FROM evidence e WHERE e.owner_type = 'IMPROVEMENT' AND e.owner_id = m.improvement_id)
+                   AND NOT EXISTS (SELECT 1 FROM comment_note c WHERE c.target_type = 'IMPROVEMENT' AND c.target_id = m.improvement_id))) AS improvement_count,
                COUNT(i.round_item_id) AS total_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'Y' THEN 1 ELSE 0 END), 0) AS excluded_count,
                COALESCE(SUM(CASE WHEN i.excluded_yn = 'N' AND i.no_reply_yn = 'Y' THEN 1 ELSE 0 END), 0) AS no_reply_count,

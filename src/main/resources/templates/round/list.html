@@ -15,7 +15,7 @@
         </span>
     </div>
     <form id="delete-form" th:action="@{/rounds/delete}" method="post"
-          data-confirm="선택한 회차와 그 안의 점검 입력·증적 파일·적정성 점검 기록·코멘트가 모두 삭제되며 되돌릴 수 없습니다. 계속할까요?">
+          data-confirm="선택한 회차와 그 안의 점검 입력·증적 파일·적정성 점검 기록·코멘트와 자동 등록된 개선사항이 모두 삭제되며 되돌릴 수 없습니다. 계속할까요?">
     <div class="table-wrap">
         <table class="table">
             <thead>
@@ -30,7 +30,7 @@
                 <td class="col-check" sec:authorize="hasRole('AUDIT_LEAD')">
                     <input type="checkbox" name="roundIds" th:value="${r.roundId}" class="row-check"
                            th:disabled="${r.improvementCount > 0}"
-                           th:title="${r.improvementCount > 0} ? |개선사항·권고사항 ${r.improvementCount}건이 연결되어 삭제할 수 없습니다| : '삭제 선택'"
+                           th:title="${r.improvementCount > 0} ? |조치가 진행·종결됐거나 직접 등록한 개선사항·권고사항 ${r.improvementCount}건이 연결되어 삭제할 수 없습니다| : '삭제 선택'"
                            th:attr="aria-label=|${r.label} 선택|">
                 </td>
                 <td><a th:href="@{/rounds/{id}(id=${r.roundId})}" th:text="${r.label}">2026년 3분기</a></td>

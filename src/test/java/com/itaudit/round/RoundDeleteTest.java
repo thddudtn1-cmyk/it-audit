@@ -116,7 +116,8 @@ class RoundDeleteTest {
         assertThat(activityLogMapper.findByAction(ActivityLogService.ROUND_DELETE)).hasSize(1)
                 .allMatch(l -> l.getDetail().contains("2026년 3분기 삭제 (상태 감사부서 제출)")
                         && l.getDetail().contains("점검 입력 1건") && l.getDetail().contains("적정성 점검 기록 1건")
-                        && l.getDetail().contains("증적 파일 2개") && l.getDetail().contains("코멘트 1건"));
+                        && l.getDetail().contains("증적 파일 2개") && l.getDetail().contains("코멘트 1건")
+                        && l.getDetail().contains("자동 등록 개선사항 0건"));
         // 삭제 후 같은 분기 회차를 다시 만들 수 있다
         assertThat(testRounds.create(2026, 3, lead)).isNotNull();
     }
@@ -131,7 +132,7 @@ class RoundDeleteTest {
     }
 
     @Test
-    void 개선사항이_연결된_회차는_삭제할_수_없고_함께_선택한_회차도_지우지_않는다() throws Exception {
+    void 직접_등록한_개선사항이_연결된_회차는_삭제할_수_없고_함께_선택한_회차도_지우지_않는다() throws Exception {
         Long linked = testRounds.create(2026, 3, lead);
         Long free = testRounds.create(2026, 2, lead);
         jdbc.update("INSERT INTO improvement (kind, round_id, team_code, assignee_id, inspection_result, detail, action_result, "
@@ -139,7 +140,7 @@ class RoundDeleteTest {
                 + "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", linked, kim.getUserId(), lead.getUserId());
 
         mvc.perform(delete(lead, free, linked))
-                .andExpect(flash().attribute("errorMessage", "개선사항·권고사항이 연결된 회차는 삭제할 수 없습니다: 2026년 3분기"));
+                .andExpect(flash().attribute("errorMessage", "조치가 진행·종결되었거나 직접 등록한 개선사항·권고사항이 연결된 회차는 삭제할 수 없습니다: 2026년 3분기"));
         assertThat(roundMapper.findRound(linked)).isNotNull();
         assertThat(roundMapper.findRound(free)).isNotNull();
 
@@ -147,7 +148,7 @@ class RoundDeleteTest {
         String html = mvc.perform(get("/rounds").with(user(lead))).andReturn().getResponse().getContentAsString();
         assertThat(html).containsPattern("name=\"roundIds\" value=\"" + linked + "\"[^>]*disabled")
                 .doesNotContainPattern("name=\"roundIds\" value=\"" + free + "\"[^>]*disabled")
-                .contains("개선사항·권고사항 1건이 연결되어 삭제할 수 없습니다");
+                .contains("직접 등록한 개선사항·권고사항 1건이 연결되어 삭제할 수 없습니다");
     }
 
     @Test
