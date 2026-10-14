@@ -22,6 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.itaudit.auth.LoginUser;
 import com.itaudit.common.BusinessException;
+import com.itaudit.improvement.ImprovementService;
+import com.itaudit.round.RoundMapper;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -34,10 +36,15 @@ public class ChecklistController {
 
     private final ChecklistService service;
     private final ChecklistExcelParser parser;
+    private final RoundMapper roundMapper;
+    private final ImprovementService improvementService;
 
-    public ChecklistController(ChecklistService service, ChecklistExcelParser parser) {
+    public ChecklistController(ChecklistService service, ChecklistExcelParser parser, RoundMapper roundMapper,
+                               ImprovementService improvementService) {
         this.service = service;
         this.parser = parser;
+        this.roundMapper = roundMapper;
+        this.improvementService = improvementService;
     }
 
     @GetMapping
@@ -189,6 +196,19 @@ public class ChecklistController {
         }
         ra.addFlashAttribute("message", "순번 " + form.getSeqNo() + " 항목을 수정했습니다.");
         return "redirect:/checklist?year=" + item.getApplyYear();
+    }
+
+    /**
+     * F-10 항목 이력: 같은 순번 항목의 모든 회차 점검결과와 개선사항·권고사항.
+     * [가정] 순번을 연도와 관계없는 마스터 코드로 보고 연도를 넘어 같은 항목으로 묶는다 (F-03 배정 복사와 같은 기준).
+     */
+    @GetMapping("/items/{itemId}/history")
+    public String history(@PathVariable Long itemId, Model model) {
+        ChecklistItem item = service.getItem(itemId);
+        model.addAttribute("item", item);
+        model.addAttribute("rounds", roundMapper.findAllBySeqNo(item.getSeqNo()));
+        model.addAttribute("improvements", improvementService.findHistory(item.getSeqNo()));
+        return "checklist/history";
     }
 
     private String itemForm(Model model, ChecklistForm form, int year, Long itemId) {

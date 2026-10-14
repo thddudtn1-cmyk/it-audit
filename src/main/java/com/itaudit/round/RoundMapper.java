@@ -30,6 +30,9 @@ public interface RoundMapper {
 
     List<RoundItem> findHistory(@Param("seqNo") int seqNo, @Param("year") int year, @Param("quarter") int quarter);
 
+    /** 같은 순번 항목의 모든 회차 (F-10 체크리스트 항목 이력) */
+    List<RoundItem> findAllBySeqNo(@Param("seqNo") int seqNo);
+
     /** 점검결과·점검 내용 상세·비고1·조치내용·개선 예정일 */
     int updateInspection(RoundItem item);
 

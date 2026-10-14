@@ -14,6 +14,9 @@ public interface ImprovementMapper {
 
     Improvement findById(@Param("improvementId") Long improvementId);
 
+    /** 같은 체크리스트 순번 항목에 연결된 개선사항·권고사항 (F-10 이력, 최신 회차부터) */
+    List<Improvement> findBySeqNo(@Param("seqNo") int seqNo);
+
     List<LinkedItem> findLinkedItems(@Param("ids") List<Long> improvementIds);
 
     /** 이 점검항목이 연결된 개선사항 ID (kind 가 null 이면 전체) */

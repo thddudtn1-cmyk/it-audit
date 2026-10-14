@@ -113,6 +113,8 @@
             </tbody>
         </table>
         <p class="muted" th:if="${#lists.isEmpty(history)}">같은 항목의 지난 회차 기록이 없습니다.</p>
+        <h3 class="section">관련 개선사항·권고사항</h3>
+        <th:block th:replace="~{fragments/history :: improvements(${improvementHistory})}"></th:block>
     </section>
 </main>
 

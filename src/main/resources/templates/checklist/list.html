@@ -52,7 +52,7 @@
                 <th class="col-period">감사 시기</th>
                 <th class="col-reg">법규/규정</th>
                 <th class="col-use">사용</th>
-                <th class="col-act"></th>
+                <th class="col-act2"></th>
             </tr>
             </thead>
             <tbody>
@@ -64,7 +64,10 @@
                 <td><span class="tag" th:classappend="${i.auditPeriod.name() == 'EVERY'} ? 'tag--strong'" th:text="${i.auditPeriod.label}">1분기</span></td>
                 <td class="pre small" th:text="${i.regulation}">규정</td>
                 <td th:text="${i.active} ? '사용' : '미사용'">사용</td>
-                <td><a th:href="@{/checklist/items/{id}/edit(id=${i.itemId})}">수정</a></td>
+                <td class="nowrap">
+                    <a th:href="@{/checklist/items/{id}/edit(id=${i.itemId})}">수정</a>
+                    <a th:href="@{/checklist/items/{id}/history(id=${i.itemId})}">이력</a>
+                </td>
             </tr>
             <tr th:if="${#lists.isEmpty(rows)}">
                 <td colspan="8" class="empty">

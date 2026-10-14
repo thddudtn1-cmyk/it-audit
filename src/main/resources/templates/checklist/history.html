@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(|#${item.seqNo} 항목 이력|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="container container--wide">
+    <h2 th:text="|#${item.seqNo} ${item.auditItem} — 이력|">항목 이력</h2>
+    <section class="panel">
+        <dl class="info-grid">
+            <dt>감사 영역</dt><dd th:text="${item.auditArea.label}">영역</dd>
+            <dt>항목 상세</dt><dd class="pre" th:text="${item.itemDetail}">상세</dd>
+            <dt>감사 시기</dt><dd th:text="${item.auditPeriod.label}">3분기</dd>
+            <dt>법규/규정</dt><dd class="pre" th:text="${item.regulation} ?: '-'">규정</dd>
+        </dl>
+    </section>
+
+    <section class="panel">
+        <h3 th:text="|회차별 점검결과 ${#lists.size(rounds)}건|">회차별</h3>
+        <table class="table" th:if="${!#lists.isEmpty(rounds)}">
+            <thead><tr><th>회차</th><th>담당</th><th>점검결과</th><th>점검 내용 상세</th><th>조치내용 및 개선 예정일</th><th>제출 상태</th><th class="col-act"></th></tr></thead>
+            <tbody>
+            <tr th:each="h : ${rounds}">
+                <td th:text="${h.roundLabel}">2026년 3분기</td>
+                <td th:text="|${h.teamName ?: '-'} / ${h.assigneeName ?: '-'}|">담당</td>
+                <td>
+                    <span th:if="${h.excluded}" class="tag" th:title="${h.excludeReason}" th:text="|제외 (${h.excludeReason})|">제외</span>
+                    <span th:unless="${h.excluded}" th:replace="~{fragments/common :: resultTag(${h.inspectionResult})}"></span>
+                </td>
+                <td class="pre small" th:text="${h.inspectionDetail}">내용</td>
+                <td class="pre small"><span th:text="${h.actionPlan}"></span><span th:if="${h.plannedDate}" th:text="| (${h.plannedDate})|"></span></td>
+                <td>
+                    <span th:if="${h.noReply}" class="tag">회신불필요</span>
+                    <span th:unless="${h.noReply or h.excluded}" class="tag" th:classappend="|submit--${h.submitStatus.name().toLowerCase()}|" th:text="${h.submitStatus.label}">확인</span>
+                </td>
+                <td><a th:href="@{/inspections/{id}(id=${h.roundItemId})}">상세</a></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="muted" th:if="${#lists.isEmpty(rounds)}">이 항목으로 만든 회차가 없습니다.</p>
+    </section>
+
+    <section class="panel">
+        <h3 th:text="|개선사항·권고사항 ${#lists.size(improvements)}건|">개선사항</h3>
+        <th:block th:replace="~{fragments/history :: improvements(${improvements})}"></th:block>
+    </section>
+
+    <div class="form__actions"><a class="button" th:href="@{/checklist(year=${item.applyYear})}">목록</a></div>
+</main>
+</body>
+</html>

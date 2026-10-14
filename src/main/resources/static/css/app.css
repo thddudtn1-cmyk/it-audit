@@ -308,3 +308,4 @@ form.inline { display: inline; }
 /* 화면 확인 후 보정: 긴 본문 열 최소 폭, 이름표·태그가 칸 너비로 늘어나지 않게 */
 .table--checklist td.pre:not(.small) { min-width: 240px; }
 .bar-row__label .result, .meter-row .tag { justify-self: start; align-self: flex-start; }
+.col-act2 { width: 84px; }

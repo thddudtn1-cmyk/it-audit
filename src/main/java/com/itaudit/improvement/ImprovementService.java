@@ -91,6 +91,20 @@ public class ImprovementService implements EvidenceAccess, AuditRequestService.F
         return withItems(result);
     }
 
+    /** 같은 항목(순번)의 개선사항·권고사항 이력 */
+    public List<Improvement> findHistory(int seqNo) {
+        return mapper.findBySeqNo(seqNo);
+    }
+
+    /** 이 사용자가 상세 화면을 열 수 있는지 (이력 목록의 링크 표시용) */
+    public boolean canView(Improvement m, LoginUser user) {
+        return switch (user.getRole()) {
+            case AUDIT_LEAD, AUDIT_DEPT, VIEWER -> true;
+            case INSPECTOR -> Objects.equals(m.getAssigneeId(), user.getUserId());
+            case ADMIN -> false;
+        };
+    }
+
     public Improvement get(Long id, LoginUser user) {
         Improvement m = load(id);
         checkViewable(m, user);

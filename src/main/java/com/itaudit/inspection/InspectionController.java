@@ -83,6 +83,8 @@ public class InspectionController {
         model.addAttribute("blockReason", service.editBlockReason(t, user));
         model.addAttribute("evidences", evidenceService.findActive(EvidenceOwnerType.ROUND_ITEM, t.item().getRoundItemId()));
         model.addAttribute("history", service.findHistory(t));
+        // F-10: 같은 항목의 개선사항·권고사항 이력
+        model.addAttribute("improvementHistory", improvementService.findHistory(t.item().getSeqNo()));
         return "inspection/form";
     }
 }

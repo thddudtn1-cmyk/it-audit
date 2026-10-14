@@ -109,6 +109,14 @@
          ORDER BY r.round_year DESC, r.quarter DESC
     </select>
 
+    <select id="findAllBySeqNo" resultType="com.itaudit.round.RoundItem">
+        SELECT <include refid="itemColumns"/>, r.round_year, r.quarter, r.status AS round_status
+        <include refid="itemJoins"/>
+          JOIN audit_round r ON r.round_id = i.round_id
+         WHERE c.seq_no = #{seqNo}
+         ORDER BY r.round_year DESC, r.quarter DESC
+    </select>
+
     <update id="updateInspection">
         UPDATE round_item
            SET inspection_result = #{inspectionResult},

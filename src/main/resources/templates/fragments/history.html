@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<!-- F-10 같은 항목의 개선사항·권고사항 이력 -->
+<th:block th:fragment="improvements(list)">
+    <table class="table" th:if="${!#lists.isEmpty(list)}">
+        <thead><tr><th>감사 시기</th><th>구분</th><th>점검 결과</th><th>내용</th><th>개선 방안</th><th>개선예정일</th><th>조치 결과</th></tr></thead>
+        <tbody>
+        <tr th:each="m : ${list}">
+            <td th:text="${m.roundShortLabel}">2025 3Q</td>
+            <td>
+                <a th:if="${loginUser.role.name() != 'INSPECTOR' or m.assigneeId == loginUser.userId}"
+                   th:href="@{/improvements/{id}(id=${m.improvementId})}" th:text="${m.kind.label}">개선사항</a>
+                <span th:unless="${loginUser.role.name() != 'INSPECTOR' or m.assigneeId == loginUser.userId}" th:text="${m.kind.label}"></span>
+            </td>
+            <td><span th:replace="~{fragments/common :: resultTag(${m.inspectionResult})}"></span></td>
+            <td class="pre small" th:text="${m.detail}">내용</td>
+            <td class="pre small" th:text="${m.improvementPlan}">방안</td>
+            <td th:text="${m.plannedDate} ?: '-'">2025-12-31</td>
+            <td>
+                <span class="tag" th:classappend="|act--${m.actionResult.name().toLowerCase()}|" th:text="${m.actionResult.label}">완료</span>
+                <span class="tag" th:if="${m.closed}">종결</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="muted" th:if="${#lists.isEmpty(list)}">같은 항목의 개선사항·권고사항이 없습니다.</p>
+</th:block>
+</body>
+</html>

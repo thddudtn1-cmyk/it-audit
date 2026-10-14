@@ -36,6 +36,16 @@
          WHERE m.improvement_id = #{improvementId}
     </select>
 
+    <select id="findBySeqNo" resultType="com.itaudit.improvement.Improvement">
+        <include refid="select"/>
+         WHERE m.improvement_id IN (SELECT x.improvement_id
+                                      FROM improvement_item x
+                                      JOIN round_item i ON i.round_item_id = x.round_item_id
+                                      JOIN checklist_item c ON c.item_id = i.checklist_item_id
+                                     WHERE c.seq_no = #{seqNo})
+         ORDER BY r.round_year DESC, r.quarter DESC, m.improvement_id DESC
+    </select>
+
     <select id="findLinkedItems" resultType="com.itaudit.improvement.LinkedItem">
         SELECT x.improvement_id, x.round_item_id, c.seq_no, c.audit_area, c.audit_item, c.item_detail, c.audit_period
           FROM improvement_item x
