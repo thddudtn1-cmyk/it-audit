@@ -49,10 +49,10 @@ java -jar target/it-audit-0.1.0-SNAPSHOT.jar   # http://localhost:8080
 | `PORT` | 8080 | Render 가 지정 |
 | `APP_DATA_DIR` | `./data` (Render: `/var/data`) | DB(`db/`)와 증적 파일(`files/`) 위치. **영구 디스크**를 마운트한다 |
 | `APP_INIT_ADMIN_PASSWORD` | `admin1234!` | 최초 관리자 비밀번호 (Render: 자동 생성) |
-| `DEMO_LOGIN_ENABLED` | `true` (Render: `false`) | 역할 선택 데모 로그인. 인터넷 공개 서버에서는 끈다 |
+| `DEMO_LOGIN_ENABLED` | `true` | 역할 선택 데모 로그인. Render 시연 서버에서도 켜 둔다. 실제 데이터를 넣거나 운영할 때는 `false` |
 | `COOKIE_SECURE` | `false` (Render: `true`) | 세션 쿠키를 HTTPS 로만 전송 |
 
 주의
 - H2 파일 DB 라서 **영구 디스크가 필요**하고, 디스크는 유료 플랜에서만 붙는다. 무료 플랜에서는 재배포·유휴 종료 때 DB 와 첨부파일이 사라진다.
 - 영구 디스크를 쓰면 인스턴스를 1개로 고정해야 한다 (DB 파일을 여러 인스턴스가 같이 쓸 수 없다).
-- 시연이 필요할 때만 `DEMO_LOGIN_ENABLED=true` 로 바꾸고 끝나면 다시 끈다. 켜면 URL 을 아는 누구나 관리자로 들어갈 수 있다.
+- 데모 로그인이 켜져 있으면 URL 을 아는 누구나 관리자 역할로 들어갈 수 있다. 시연 데이터만 두고, 실제 데이터를 넣기 전에는 끈다.

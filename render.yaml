@@ -21,8 +21,9 @@ services:
       # 첫 로그인 때 변경이 강제된다.
       - key: APP_INIT_ADMIN_PASSWORD
         generateValue: true
-      # 인터넷에 공개되므로 역할 선택 데모 로그인은 끈다. 시연할 때만 true 로 바꾼다.
+      # 시연용 역할 선택 데모 로그인을 켠다. 주소를 아는 누구나 역할을 골라 들어올 수 있으니
+      # 실제 데이터를 넣기 전에는 "false" 로 바꾼다.
       - key: DEMO_LOGIN_ENABLED
-        value: "false"
+        value: "true"
       - key: COOKIE_SECURE
         value: "true"
